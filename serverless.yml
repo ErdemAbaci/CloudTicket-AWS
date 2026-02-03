@@ -1,0 +1,108 @@
+service: cloud-ticket-backend
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: eu-central-1
+  memorySize: 128
+  environment:
+    EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
+    QUEUE_URL: { Ref: TicketQueue } # Kuyruk URL'ini AWS'den otomatik al
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+          Resource: "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.EVENTS_TABLE}"
+        - Effect: Allow # YENİ İZİN: Kuyruğa mesaj atabilme
+          Action:
+            - sqs:SendMessage
+          Resource: { Fn::GetAtt: [TicketQueue, Arn] }
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: /hello
+          method: get
+          
+  createEvent: # PRODUCER (Artık sadece kuyruğa atar)
+    handler: handler.createEvent
+    events:
+      - http:
+          path: /event
+          method: post
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
+
+  processEvent: # CONSUMER (Yeni İşçi: Kuyruğu dinler, DB'ye yazar)
+    handler: handler.processEvent
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - TicketQueue
+              - Arn
+          batchSize: 1 # Her seferinde 1 mesaj işle (Öğrenme amaçlı düşük tuttum)
+
+  listEvents:
+    handler: handler.listEvents
+    events:
+      - http:
+          path: /events
+          method: get
+
+  getEvent:
+    handler: handler.getEvent
+    events:
+      - http:
+          path: /event/{id}
+          method: get
+
+resources:
+  Resources:
+    EventsTable: # Veritabanı (Aynı kalıyor)
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.EVENTS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        
+    TicketQueue: # YENİ KAYNAK: SQS Kuyruğu
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-queue-${sls:stage}
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:service}-user-pool-${sls:stage}
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:service}-user-pool-client-${sls:stage}
+        UserPoolId:
+          Ref: CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_ADMIN_USER_PASSWORD_AUTH
+          - ALLOW_USER_PASSWORD_AUTH        
+          - ALLOW_REFRESH_TOKEN_AUTH
+        GenerateSecret: false      
