@@ -1,13 +1,17 @@
 service: cloud-ticket-backend
+frameworkVersion: '4'
 
 provider:
   name: aws
   runtime: nodejs20.x
   region: eu-central-1
   memorySize: 128
+  tracing:
+    lambda: true
+    apiGateway: true
   environment:
     EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
-    QUEUE_URL: { Ref: TicketQueue } # Kuyruk URL'ini AWS'den otomatik al
+    QUEUE_URL: { Ref: TicketQueue }
   iam:
     role:
       statements:
@@ -18,10 +22,25 @@ provider:
             - dynamodb:GetItem
             - dynamodb:PutItem
           Resource: "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.EVENTS_TABLE}"
-        - Effect: Allow # YENİ İZİN: Kuyruğa mesaj atabilme
+        - Effect: Allow
           Action:
             - sqs:SendMessage
           Resource: { Fn::GetAtt: [TicketQueue, Arn] }
+        - Effect: Allow
+          Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+          Resource: "*"
+
+# --- YENİ NESİL TYPESCRIPT AYARI (Plugin yerine Build) ---
+build:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    exclude: ['aws-sdk']
+    target: 'node18'
+    platform: 'node'
 
 functions:
   hello:
@@ -30,8 +49,7 @@ functions:
       - http:
           path: /hello
           method: get
-          
-  createEvent: # PRODUCER (Artık sadece kuyruğa atar)
+  createEvent:
     handler: handler.createEvent
     events:
       - http:
@@ -44,8 +62,7 @@ functions:
               Fn::GetAtt:
                 - CognitoUserPool
                 - Arn
-
-  processEvent: # CONSUMER (Yeni İşçi: Kuyruğu dinler, DB'ye yazar)
+  processEvent:
     handler: handler.processEvent
     events:
       - sqs:
@@ -53,15 +70,13 @@ functions:
             Fn::GetAtt:
               - TicketQueue
               - Arn
-          batchSize: 1 # Her seferinde 1 mesaj işle (Öğrenme amaçlı düşük tuttum)
-
+          batchSize: 1
   listEvents:
     handler: handler.listEvents
     events:
       - http:
           path: /events
           method: get
-
   getEvent:
     handler: handler.getEvent
     events:
@@ -71,7 +86,7 @@ functions:
 
 resources:
   Resources:
-    EventsTable: # Veritabanı (Aynı kalıyor)
+    EventsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.EVENTS_TABLE}
@@ -82,11 +97,12 @@ resources:
           - AttributeName: id
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-        
-    TicketQueue: # YENİ KAYNAK: SQS Kuyruğu
+    
+    TicketQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:service}-queue-${sls:stage}
+
     CognitoUserPool:
       Type: AWS::Cognito::UserPool
       Properties:
@@ -95,14 +111,15 @@ resources:
           - email
         AutoVerifiedAttributes:
           - email
+
     CognitoUserPoolClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
         ClientName: ${self:service}-user-pool-client-${sls:stage}
         UserPoolId:
           Ref: CognitoUserPool
+        GenerateSecret: false
         ExplicitAuthFlows:
           - ALLOW_ADMIN_USER_PASSWORD_AUTH
-          - ALLOW_USER_PASSWORD_AUTH        
+          - ALLOW_USER_PASSWORD_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
-        GenerateSecret: false      
