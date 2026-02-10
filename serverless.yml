@@ -12,6 +12,7 @@ provider:
   environment:
     EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
     QUEUE_URL: { Ref: TicketQueue }
+    EVENT_BUS_NAME: { Ref: EventBus }
   iam:
     role:
       statements:
@@ -31,6 +32,10 @@ provider:
             - xray:PutTraceSegments
             - xray:PutTelemetryRecords
           Resource: "*"
+        - Effect: Allow
+          Action:
+            - events:PutEvents # EventBridge'e olay fırlatma yetkisi
+          Resource: { Fn::GetAtt: [EventBus, Arn] }  
 
 # --- YENİ NESİL TYPESCRIPT AYARI (Plugin yerine Build) ---
 build:
@@ -49,12 +54,14 @@ functions:
       - http:
           path: /hello
           method: get
+          cors: true
   createEvent:
     handler: handler.createEvent
     events:
       - http:
           path: /event
           method: post
+          cors: true
           authorizer:
             name: PrivateAuthorizer
             type: COGNITO_USER_POOLS
@@ -77,12 +84,14 @@ functions:
       - http:
           path: /events
           method: get
+          cors: true
   getEvent:
     handler: handler.getEvent
     events:
       - http:
           path: /event/{id}
           method: get
+          cors: true
 
 resources:
   Resources:
@@ -123,3 +132,38 @@ resources:
           - ALLOW_ADMIN_USER_PASSWORD_AUTH
           - ALLOW_USER_PASSWORD_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_USER_SRP_AUTH
+    EventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: ${self:service}-event-bus-${sls:stage}
+    EventToSQSRule:
+      Type: AWS::Events::Rule
+      Properties:
+        EventBusName: { Ref: EventBus }
+        Description: "Bilet siparişlerini SQS kuyruğuna ilet"
+        State: ENABLED
+        EventPattern:
+          source:
+            - "com.cloudticket" # Bizim uydurduğumuz kaynak ismi
+          detail-type:
+            - "OrderCreated"    # Bizim uydurduğumuz olay tipi
+        Targets:
+          - Id: "SendToSQS"
+            Arn: { Fn::GetAtt: [TicketQueue, Arn] }
+    TicketQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - { Ref: TicketQueue }
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: "events.amazonaws.com" # EventBridge servisi
+              Action: "sqs:SendMessage"
+              Resource: { Fn::GetAtt: [TicketQueue, Arn] }
+              Condition:
+                ArnEquals:
+                  "aws:SourceArn": { Fn::GetAtt: [EventToSQSRule, Arn] }        
