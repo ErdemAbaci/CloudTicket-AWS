@@ -2,16 +2,20 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, SQSEvent } from "aws-lambd
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { EventBridgeClient, PutEventsCommand } from "@aws-sdk/client-eventbridge";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 
 // İstemciler (Tip tanımlamaları otomatik gelir)
 const dbClient = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dbClient);
 const eventBridgeClient = new EventBridgeClient({});
-const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME || "";
+const s3Client = new S3Client({});
 
+const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME || "";
 const TABLE_NAME = process.env.EVENTS_TABLE || "";
 const QUEUE_URL = process.env.QUEUE_URL || "";
+const MEDIA_BUCKET_NAME = process.env.MEDIA_BUCKET_NAME || "";
 
 // --- TİP TANIMLAMALARI (INTERFACE) ---
 // Veritabanına ne kaydedeceğimizi burada tanımlıyoruz.
@@ -21,6 +25,7 @@ interface TicketEvent {
   name: string;
   date: string;
   price: number;
+  imageUrl?: string; // Resim URL'i opsiyonel
   createdAt: string;
 }
 
@@ -60,6 +65,7 @@ export const createEvent = async (event: APIGatewayProxyEvent): Promise<APIGatew
       name: body.name,
       date: body.date || new Date().toISOString(),
       price: body.price,
+      imageUrl: body.imageUrl,
       createdAt: new Date().toISOString()
     };
 
@@ -140,5 +146,40 @@ export const getEvent = async (event: APIGatewayProxyEvent): Promise<APIGatewayP
     return { statusCode: 200, headers, body: JSON.stringify(result.Item) };
   } catch (error) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: "Hata" }) };
+  }
+};
+
+// 6. GET UPLOAD URL (S3 Presigned URL)
+export const getUploadUrl = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  try {
+    const contentType = event.queryStringParameters?.contentType;
+
+    if (!contentType) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: "contentType is required" }) };
+    }
+
+    const fileExtension = contentType.split("/")[1] || "jpg";
+    const key = `${randomUUID()}.${fileExtension}`;
+
+    const command = new PutObjectCommand({
+      Bucket: MEDIA_BUCKET_NAME,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    // 5 dakikalık (300 saniye) geçerli bir URL oluştur
+    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        uploadUrl,
+        key
+      }),
+    };
+  } catch (error) {
+    console.error("S3 Presigner Error:", error);
+    return { statusCode: 500, headers, body: JSON.stringify({ error: "Could not generate upload URL" }) };
   }
 };

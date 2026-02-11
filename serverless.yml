@@ -13,6 +13,7 @@ provider:
     EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
     QUEUE_URL: { Ref: TicketQueue }
     EVENT_BUS_NAME: { Ref: EventBus }
+    MEDIA_BUCKET_NAME: ${self:service}-media-${sls:stage}
   iam:
     role:
       statements:
@@ -36,6 +37,11 @@ provider:
           Action:
             - events:PutEvents # EventBridge'e olay fırlatma yetkisi
           Resource: { Fn::GetAtt: [EventBus, Arn] }  
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource: "arn:aws:s3:::${self:provider.environment.MEDIA_BUCKET_NAME}/*"
 
 # --- YENİ NESİL TYPESCRIPT AYARI (Plugin yerine Build) ---
 build:
@@ -92,6 +98,20 @@ functions:
           path: /event/{id}
           method: get
           cors: true
+  getUploadUrl:
+    handler: handler.getUploadUrl
+    events:
+      - http:
+          path: /upload-url
+          method: get
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
 
 resources:
   Resources:
@@ -167,3 +187,20 @@ resources:
               Condition:
                 ArnEquals:
                   "aws:SourceArn": { Fn::GetAtt: [EventToSQSRule, Arn] }        
+    
+    MediaBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.MEDIA_BUCKET_NAME}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - "*"
+              AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - HEAD
+              MaxAge: 3000

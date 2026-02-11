@@ -29,4 +29,19 @@ export const getEvents = () => api.get('/events');
 export const getEvent = (id: string) => api.get(`/event/${id}`);
 export const createEvent = (data: { name: string; date: string; price: number }) => api.post('/event', data);
 
+// --- S3 UPLOAD ---
+export const getUploadUrl = async (token: string, contentType: string) => {
+    const response = await api.get('/upload-url', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { contentType },
+    });
+    return response.data; // { uploadUrl, key }
+};
+
+export const uploadFileToS3 = async (uploadUrl: string, file: File) => {
+    await axios.put(uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+    });
+};
+
 export default api;
