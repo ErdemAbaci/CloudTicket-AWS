@@ -14,6 +14,7 @@ provider:
     QUEUE_URL: { Ref: TicketQueue }
     EVENT_BUS_NAME: { Ref: EventBus }
     MEDIA_BUCKET_NAME: ${self:service}-media-${sls:stage}
+
   iam:
     role:
       statements:
@@ -55,14 +56,14 @@ build:
 
 functions:
   hello:
-    handler: handler.hello
+    handler: src/functions/hello.handler
     events:
       - http:
           path: /hello
           method: get
           cors: true
   createEvent:
-    handler: handler.createEvent
+    handler: src/functions/event/create.handler
     events:
       - http:
           path: /event
@@ -76,7 +77,7 @@ functions:
                 - CognitoUserPool
                 - Arn
   processEvent:
-    handler: handler.processEvent
+    handler: src/functions/worker/processSQS.handler
     events:
       - sqs:
           arn:
@@ -85,21 +86,21 @@ functions:
               - Arn
           batchSize: 1
   listEvents:
-    handler: handler.listEvents
+    handler: src/functions/event/list.handler
     events:
       - http:
           path: /events
           method: get
           cors: true
   getEvent:
-    handler: handler.getEvent
+    handler: src/functions/event/get.handler
     events:
       - http:
           path: /event/{id}
           method: get
           cors: true
   getUploadUrl:
-    handler: handler.getUploadUrl
+    handler: src/functions/upload/getUrl.handler
     events:
       - http:
           path: /upload-url
@@ -114,93 +115,8 @@ functions:
                 - Arn
 
 resources:
-  Resources:
-    EventsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.EVENTS_TABLE}
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-    
-    TicketQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: ${self:service}-queue-${sls:stage}
-
-    CognitoUserPool:
-      Type: AWS::Cognito::UserPool
-      Properties:
-        UserPoolName: ${self:service}-user-pool-${sls:stage}
-        UsernameAttributes:
-          - email
-        AutoVerifiedAttributes:
-          - email
-
-    CognitoUserPoolClient:
-      Type: AWS::Cognito::UserPoolClient
-      Properties:
-        ClientName: ${self:service}-user-pool-client-${sls:stage}
-        UserPoolId:
-          Ref: CognitoUserPool
-        GenerateSecret: false
-        ExplicitAuthFlows:
-          - ALLOW_ADMIN_USER_PASSWORD_AUTH
-          - ALLOW_USER_PASSWORD_AUTH
-          - ALLOW_REFRESH_TOKEN_AUTH
-          - ALLOW_USER_SRP_AUTH
-    EventBus:
-      Type: AWS::Events::EventBus
-      Properties:
-        Name: ${self:service}-event-bus-${sls:stage}
-    EventToSQSRule:
-      Type: AWS::Events::Rule
-      Properties:
-        EventBusName: { Ref: EventBus }
-        Description: "Bilet siparişlerini SQS kuyruğuna ilet"
-        State: ENABLED
-        EventPattern:
-          source:
-            - "com.cloudticket" # Bizim uydurduğumuz kaynak ismi
-          detail-type:
-            - "OrderCreated"    # Bizim uydurduğumuz olay tipi
-        Targets:
-          - Id: "SendToSQS"
-            Arn: { Fn::GetAtt: [TicketQueue, Arn] }
-    TicketQueuePolicy:
-      Type: AWS::SQS::QueuePolicy
-      Properties:
-        Queues:
-          - { Ref: TicketQueue }
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service: "events.amazonaws.com" # EventBridge servisi
-              Action: "sqs:SendMessage"
-              Resource: { Fn::GetAtt: [TicketQueue, Arn] }
-              Condition:
-                ArnEquals:
-                  "aws:SourceArn": { Fn::GetAtt: [EventToSQSRule, Arn] }        
-    
-    MediaBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:provider.environment.MEDIA_BUCKET_NAME}
-        CorsConfiguration:
-          CorsRules:
-            - AllowedOrigins:
-                - "*"
-              AllowedHeaders:
-                - "*"
-              AllowedMethods:
-                - GET
-                - PUT
-                - POST
-                - HEAD
-              MaxAge: 3000
+  - ${file(resources/dynamodb.yml)}
+  - ${file(resources/sqs.yml)}
+  - ${file(resources/cognito.yml)}
+  - ${file(resources/eventbridge.yml)}
+  - ${file(resources/s3.yml)}

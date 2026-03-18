@@ -1,0 +1,22 @@
+Resources:
+  TicketQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ${self:service}-queue-${sls:stage}
+
+  TicketQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - { Ref: TicketQueue }
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "events.amazonaws.com" # EventBridge servisi
+            Action: "sqs:SendMessage"
+            Resource: { Fn::GetAtt: [TicketQueue, Arn] }
+            Condition:
+              ArnEquals:
+                "aws:SourceArn": { Fn::GetAtt: [EventToSQSRule, Arn] }

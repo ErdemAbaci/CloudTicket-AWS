@@ -1,0 +1,19 @@
+Resources:
+  EventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: ${self:service}-event-bus-${sls:stage}
+  EventToSQSRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: { Ref: EventBus }
+      Description: "Bilet siparişlerini SQS kuyruğuna ilet"
+      State: ENABLED
+      EventPattern:
+        source:
+          - "com.cloudticket"
+        detail-type:
+          - "OrderCreated"
+      Targets:
+        - Id: "SendToSQS"
+          Arn: { Fn::GetAtt: [TicketQueue, Arn] }
