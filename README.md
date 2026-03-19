@@ -1,69 +1,66 @@
-<!--
-title: 'AWS Simple HTTP Endpoint example in NodeJS'
-description: 'This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.'
-layout: Doc
-framework: v4
-platform: AWS
-language: nodeJS
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, Inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+# CloudTicket Backend 🎫☁️
 
-# Serverless Framework Node HTTP API on AWS
+CloudTicket, AWS üzerinde Serverless mimari yaklaşımıyla geliştirilen, ölçeklenebilir ve güvenli bir etkinlik/bilet yönetim sistemi arka ucudur (backend). Bu proje, modern bulut geliştirme pratiklerini kullanarak yüksek erişilebilirlik, düşük gecikme süresi ve maliyet optimizasyonu sağlamayı hedefler.
 
-This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.
+## 🚀 Projenin Final Durumunda Sunacakları
 
-This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes Typescript, Mongo, DynamoDB and other examples.
+Bu proje tamamlandığında, uçtan uca tamamen sunucusuz (serverless) tabanlı, olay güdümlü (event-driven) ve güvenli bir etkinlik yönetim platformunun altyapısını oluşturacaktır. Final sürümünde şu yetenekler tam olarak entegre edilmiş olacaktır:
 
-## Usage
+- **Etkinlik Yönetimi:** Yeni etkinlikler oluşturma, mevcut etkinlikleri listeleme ve detaylarını görüntüleme yeteneği.
+- **Güvenli Kimlik Doğrulama:** AWS Cognito entegrasyonu ile sadece yetkili (giriş yapmış) kullanıcıların etkinlik oluşturabilmesi ve dosya yükleme talebinde bulunabilmesi.
+- **Medya Dosyası Yönetimi:** Etkinliklere ait görsellerin veya dosyaların AWS S3 üzerinden "Pre-signed URL" asenkron yükleme yöntemiyle, yükü doğrudan S3'e bırakarak güvenli bir şekilde depolanması.
+- **Asenkron İşlem ve Kuyruk Yönetimi:** Amazon SQS aracılığıyla biletleme veya etkinlik işleme gibi yoğun iş yüklerinin kullanıcıyı bekletmeden arka planda (worker) güvenilir bir şekilde işlenmesi.
+- **Olay Odaklı Mimari (Event-Driven):** Amazon EventBridge üzerinden sistem içi çeşitli mikro servis haberleşmelerinin veya durum değişikliklerinin (örn. "Yeni etkinlik oluşturuldu") diğer servislere aktarılabilmesi.
+- **Gözlemlenebilirlik ve İzleme:** AWS X-Ray ile tüm API ve Lambda işlemlerinin performansının izlenmesi, darboğazların ve hataların tespit edilebilmesi.
 
-### Deployment
+## 🏗 Kullanılan Teknolojiler ve AWS Servisleri
 
-In order to deploy the example, you need to run the following command:
+Proje, gücünü tamamen Serverless Framework ve AWS servislerinden alır:
 
-```
-serverless deploy
-```
+- **Compute:** AWS Lambda (Node.js 20.x, TypeScript & esbuild)
+- **API Management:** Amazon API Gateway
+- **Database:** Amazon DynamoDB (NoSQL veri depolama)
+- **Message Queue:** Amazon SQS
+- **Event Bus:** Amazon EventBridge
+- **Storage:** Amazon S3
+- **Authentication:** Amazon Cognito (User Pools)
+- **Tracing:** AWS X-Ray
+- **Infrastructure as Code (IaC):** Serverless Framework (v4)
 
-After running deploy, you should see output similar to:
+## 📡 API Uç Noktaları (Endpoints)
 
-```
-Deploying "serverless-http-api" to stage "dev" (us-east-1)
+| Metot | Uç Nokta (Path) | Açıklama | Yetkilendirme |
+|-------|----------------|----------|---------------|
+| `GET` | `/hello` | Sistemin ayakta olup olmadığını test etmek için basit bir endpoint. | Açık |
+| `POST`| `/event` | Yeni bir etkinlik oluşturmak için kullanılır. SQS'e mesaj ve EventBridge'e olay gönderimi yapabilir. | **Cognito** |
+| `GET` | `/events` | Sistemdeki tüm etkinlikleri listeler. | Açık |
+| `GET` | `/event/{id}` | Belirli bir etkinliğin detaylarını getirir. | Açık |
+| `GET` | `/upload-url` | S3'e doğrudan dosya yükleyebilmek için güvenli, geçici bir (Pre-signed) URL üretir. | **Cognito** |
 
-✔ Service deployed to stack serverless-http-api-dev (91s)
+*Not: Arka planda `processEvent` adında bir SQS Worker Lambda fonksiyonu, gelen mesajları dinleyerek işlemektedir.*
 
-endpoint: GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
-functions:
-  hello: serverless-http-api-dev-hello (1.6 kB)
-```
+## 🛠 Kurulum ve Geliştirme
 
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [HTTP API (API Gateway V2) event docs](https://www.serverless.com/framework/docs/providers/aws/events/http-api).
+**Gereksinimler:**
+- Node.js (v18 veya v20)
+- AWS CLI (Yapılandırılmış ve geçerli kimlik bilgilerine sahip)
+- Serverless Framework v4
 
-### Invocation
+**Adımlar:**
 
-After successful deployment, you can call the created application via HTTP:
+1. Bağımlılıkları yükleyin:
+   ```bash
+   npm install
+   ```
 
-```
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
-```
+2. Projeyi AWS hesabınıza dağıtın (deploy):
+   ```bash
+   serverless deploy
+   ```
 
-Which should result in response similar to:
+3. Geliştirme ortamında (lokal olarak) test etmek için:
+   ```bash
+   serverless dev
+   ```
 
-```json
-{ "message": "Go Serverless v4! Your function executed successfully!" }
-```
-
-### Local development
-
-The easiest way to develop and test your function is to use the `dev` command:
-
-```
-serverless dev
-```
-
-This will start a local emulator of AWS Lambda and tunnel your requests to and from AWS Lambda, allowing you to interact with your function as if it were running in the cloud.
-
-Now you can invoke the function as before, but this time the function will be executed locally. Now you can develop your function locally, invoke it, and see the results immediately without having to re-deploy.
-
-When you are done developing, don't forget to run `serverless deploy` to deploy the function to the cloud.
+Herhangi bir sorunuz olursa veya katkıda bulunmak isterseniz, Issues sekmesini kullanabilirsiniz.
