@@ -113,6 +113,20 @@ functions:
               Fn::GetAtt:
                 - CognitoUserPool
                 - Arn
+  purchaseTicket:
+    handler: src/functions/ticket/purchase.handler
+    events:
+      - http:
+          path: /event/{id}/purchase
+          method: post
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
 
 resources:
   - ${file(resources/dynamodb.yml)}

@@ -1,4 +1,4 @@
-import { PutCommand, ScanCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient } from "./client";
 import { TicketEvent } from "../types";
 
@@ -19,4 +19,16 @@ export const listAllEvents = async () => {
 export const getEventById = async (id: string) => {
   const result = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id } }));
   return result.Item;
+};
+
+export const decrementAvailableTickets = async (id: string) => {
+  await docClient.send(new UpdateCommand({
+    TableName: TABLE_NAME,
+    Key: { id },
+    UpdateExpression: "SET availableTickets = availableTickets - :dec",
+    ConditionExpression: "availableTickets >= :dec", // Stok 1 veya fazlaysa düş
+    ExpressionAttributeValues: {
+      ":dec": 1
+    }
+  }));
 };

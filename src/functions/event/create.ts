@@ -12,8 +12,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const body = JSON.parse(event.body) as Partial<TicketEvent>;
 
-    if (!body.name || !body.price) {
-      return formatResponse(400, { error: "İsim ve Fiyat zorunludur" });
+    if (!body.name || typeof body.price !== "number" || typeof body.totalTickets !== "number") {
+      return formatResponse(400, { error: "İsim, Fiyat ve Toplam Bilet (totalTickets) zorunludur" });
     }
 
     const eventId = randomUUID();
@@ -23,6 +23,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       name: body.name,
       date: body.date || new Date().toISOString(),
       price: body.price,
+      totalTickets: body.totalTickets,
+      availableTickets: body.totalTickets,
       imageUrl: body.imageUrl,
       createdAt: new Date().toISOString()
     };
