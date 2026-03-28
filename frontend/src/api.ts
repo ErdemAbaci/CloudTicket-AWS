@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { fetchAuthSession } from 'aws-amplify/auth';
+import { toast } from 'react-toastify';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
 });
 
 api.interceptors.request.use(
-    async (config) => {
+    async (config: any) => {
         try {
             const session = await fetchAuthSession();
             const token = session.tokens?.idToken?.toString();
@@ -19,7 +20,26 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
+    (error: any) => {
+        return Promise.reject(error);
+    }
+);
+
+// --- GLOBAL ERROR HANDLER ---
+api.interceptors.response.use(
+    (response: any) => {
+        return response;
+    },
+    (error: any) => {
+        // Sunucudan (Backend'den) dönen bir hata varsa görelim
+        const serverError = error.response?.data?.error || "Sunucuyla iletişim kurulamadı";
+        
+        if (error.response?.status === 401) {
+             toast.error("Oturum süreniz doldu, lütfen tekrar giriş yapın.");
+        } else {
+             toast.error(`Hata: ${serverError}`);
+        }
+        
         return Promise.reject(error);
     }
 );
