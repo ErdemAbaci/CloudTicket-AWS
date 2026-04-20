@@ -47,7 +47,8 @@ api.interceptors.response.use(
 export const getHealth = () => api.get('/hello');
 export const getEvents = () => api.get('/events');
 export const getEvent = (id: string) => api.get(`/event/${id}`);
-export const createEvent = (data: { name: string; date: string; price: number }) => api.post('/event', data);
+export const createEvent = (data: { name: string; date: string; price: number; totalTickets: number; imageUrl?: string }) => api.post('/event', data);
+export const purchaseTicket = (id: string) => api.post(`/event/${id}/purchase`);
 
 // --- S3 UPLOAD ---
 export const getUploadUrl = async (token: string, contentType: string) => {

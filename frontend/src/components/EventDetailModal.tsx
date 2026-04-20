@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEvent } from '../api';
+import { getEvent, purchaseTicket } from '../api';
+import { toast } from 'react-toastify';
+import { useState } from 'react';
 import { X, Calendar, Tag, Clock } from 'lucide-react';
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
@@ -11,7 +13,8 @@ interface EventDetailModalProps {
 }
 
 export default function EventDetailModal({ isOpen, onClose, eventId }: EventDetailModalProps) {
-    const { data: event, isLoading, isError } = useQuery({
+    const [isPurchasing, setIsPurchasing] = useState(false);
+    const { data: event, isLoading, isError, refetch } = useQuery({
         queryKey: ['event', eventId],
         queryFn: async () => {
             if (!eventId) return null;
@@ -20,6 +23,20 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
         },
         enabled: !!eventId && isOpen,
     });
+
+    const handlePurchase = async () => {
+        if (!eventId) return;
+        setIsPurchasing(true);
+        try {
+            await purchaseTicket(eventId);
+            toast.success("Bilet başarıyla alındı!");
+            refetch(); // Stok bilgisini tazelemek için
+        } catch (error) {
+            // Toast api.ts içerisinde global olarak hallediliyor
+        } finally {
+            setIsPurchasing(false);
+        }
+    };
 
     return (
         <Transition appear show={isOpen} as={Fragment}>
@@ -107,13 +124,22 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                                        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-3">
                                             <button
                                                 type="button"
-                                                className="inline-flex justify-center rounded-xl border border-transparent bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-900 hover:bg-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                                                className="inline-flex justify-center rounded-xl border border-transparent bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
                                                 onClick={onClose}
                                             >
-                                                Tamam
+                                                Kapat
+                                            </button>
+                                            
+                                            <button
+                                                type="button"
+                                                disabled={isPurchasing || (event.availableTickets !== undefined && event.availableTickets <= 0)}
+                                                className="inline-flex justify-center rounded-xl border border-transparent bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                onClick={handlePurchase}
+                                            >
+                                                {isPurchasing ? 'İşleniyor...' : (event.availableTickets !== undefined && event.availableTickets <= 0 ? 'Tükendi' : 'Bilet Satın Al')}
                                             </button>
                                         </div>
                                     </div>

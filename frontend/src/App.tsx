@@ -29,6 +29,8 @@ interface TicketData {
   name: string;
   date: string;
   price: number;
+  availableTickets?: number;
+  totalTickets?: number;
 }
 
 function App() {
@@ -206,6 +208,7 @@ function App() {
                           <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">İsim</th>
                           <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tarih</th>
                           <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Fiyat</th>
+                          <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Doluluk</th>
                           <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">İşlem</th>
                         </tr>
                       </thead>
@@ -234,6 +237,15 @@ function App() {
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
                                 {ticket.price} ₺
                               </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              {ticket.totalTickets ? (
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${ticket.availableTickets === 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
+                                  {ticket.availableTickets} / {ticket.totalTickets}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-xs">-</span>
+                              )}
                             </td>
                             <td className="px-6 py-4 text-right">
                               <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-full transition-colors">

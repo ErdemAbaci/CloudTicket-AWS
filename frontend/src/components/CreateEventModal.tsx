@@ -13,13 +13,13 @@ interface CreateEventModalProps {
 
 export default function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     const queryClient = useQueryClient();
-    const [formData, setFormData] = useState({ name: '', date: '', price: '' });
+    const [formData, setFormData] = useState({ name: '', date: '', price: '', totalTickets: '' });
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name || !formData.date || !formData.price) {
+        if (!formData.name || !formData.date || !formData.price || !formData.totalTickets) {
             toast.warning('Lütfen tüm alanları doldurun.');
             return;
         }
@@ -54,11 +54,12 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                 name: formData.name,
                 date: formData.date,
                 price: Number(formData.price),
+                totalTickets: Number(formData.totalTickets),
                 imageUrl: imageKey,
-            } as any); // Type casting for quick fix, better to update api type definition
+            });
 
             toast.success('Etkinlik oluşturma talebi kuyruğa alındı (202 Accepted).');
-            setFormData({ name: '', date: '', price: '' });
+            setFormData({ name: '', date: '', price: '', totalTickets: '' });
             setFile(null);
             onClose();
 
@@ -152,6 +153,20 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                                 placeholder="0.00"
                                                 value={formData.price}
                                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-slate-700">Kapasite (Toplam Bilet)</label>
+                                        <div className="relative">
+                                            <Type className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
+                                            <input
+                                                type="number"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                placeholder="Örn: 1000"
+                                                value={formData.totalTickets}
+                                                onChange={(e) => setFormData({ ...formData, totalTickets: e.target.value })}
                                             />
                                         </div>
                                     </div>
