@@ -17,13 +17,13 @@ export const publishTicketEvent = async (messageBody: TicketEvent) => {
   }));
 };
 
-export const publishTicketPurchased = async (eventId: string) => {
+export const publishTicketPurchased = async (eventId: string, userId: string) => {
   await eventBridgeClient.send(new PutEventsCommand({
     Entries: [
       {
         Source: "com.cloudticket",
         DetailType: "TicketPurchased",
-        Detail: JSON.stringify({ eventId, purchasedAt: new Date().toISOString() }),
+        Detail: JSON.stringify({ eventId, userId, purchasedAt: new Date().toISOString() }),
         EventBusName: EVENT_BUS_NAME,
       },
     ],

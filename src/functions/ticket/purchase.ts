@@ -8,6 +8,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const id = event.pathParameters?.id;
     if (!id) return formatResponse(400, { error: "Etkinlik ID gerekli" });
 
+    // Cognito'dan kullanıcı bilgisini al (Cognito Authorizer kullanıldığı için garanti)
+    const userId = event.requestContext.authorizer?.claims?.sub || event.requestContext.authorizer?.claims?.username || "anonymous";
+
     // Atomic kilit mekanizması
     try {
       await decrementAvailableTickets(id);
@@ -19,7 +22,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // Bilet garantilendi! EventBridge'ye satın alım olayını fırlat (Asenkron - beklememize gerek yok)
-    await publishTicketPurchased(id);
+    await publishTicketPurchased(id, userId);
 
     return formatResponse(200, {
       message: "Bilet başarıyla satın alındı/rezerve edildi!",

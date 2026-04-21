@@ -11,6 +11,7 @@ provider:
     apiGateway: true
   environment:
     EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
+    TICKETS_TABLE: ${self:service}-tickets-table-${sls:stage}
     QUEUE_URL: { Ref: TicketQueue }
     EVENT_BUS_NAME: { Ref: EventBus }
     MEDIA_BUCKET_NAME: ${self:service}-media-${sls:stage}
@@ -24,7 +25,9 @@ provider:
             - dynamodb:Scan
             - dynamodb:GetItem
             - dynamodb:PutItem
-          Resource: "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.EVENTS_TABLE}"
+          Resource: 
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.EVENTS_TABLE}"
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.TICKETS_TABLE}"
         - Effect: Allow
           Action:
             - sqs:SendMessage
@@ -119,6 +122,30 @@ functions:
       - http:
           path: /event/{id}/purchase
           method: post
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
+  generateTicketQR:
+    handler: src/functions/ticket/generateQR.handler
+    events:
+      - eventBridge:
+          eventBus: { Ref: EventBus }
+          pattern:
+            source:
+              - "com.cloudticket"
+            detail-type:
+              - "TicketPurchased"
+  listMyTickets:
+    handler: src/functions/ticket/listMyTickets.handler
+    events:
+      - http:
+          path: /my-tickets
+          method: get
           cors: true
           authorizer:
             name: PrivateAuthorizer

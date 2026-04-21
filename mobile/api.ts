@@ -40,5 +40,6 @@ api.interceptors.response.use(
 export const getEvents = () => api.get('/events');
 export const getEvent = (id: string) => api.get(`/event/${id}`);
 export const purchaseTicket = (id: string) => api.post(`/event/${id}/purchase`);
+export const getMyTickets = () => api.get('/my-tickets');
 
 export default api;
