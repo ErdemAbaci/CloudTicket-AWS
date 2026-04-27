@@ -1,20 +1,14 @@
 import { EventBridgeEvent } from "aws-lambda";
 import * as QRCode from "qrcode";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { docClient } from "../../db/client";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { docClient, s3Client } from "../../db/client";
 import { PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from "crypto";
+import { TicketPurchasedDetail } from "../../types";
 
-const s3Client = new S3Client({});
 const TICKETS_TABLE = process.env.TICKETS_TABLE || "";
 const EVENTS_TABLE = process.env.EVENTS_TABLE || "";
 const MEDIA_BUCKET_NAME = process.env.MEDIA_BUCKET_NAME || "";
-
-interface TicketPurchasedDetail {
-  eventId: string;
-  userId: string;
-  purchasedAt: string;
-}
 
 export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketPurchasedDetail>) => {
   try {

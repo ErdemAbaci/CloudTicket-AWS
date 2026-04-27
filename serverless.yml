@@ -12,6 +12,7 @@ provider:
   environment:
     EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
     TICKETS_TABLE: ${self:service}-tickets-table-${sls:stage}
+    HISTORY_TABLE: ${self:service}-history-table-${sls:stage}
     QUEUE_URL: { Ref: TicketQueue }
     EVENT_BUS_NAME: { Ref: EventBus }
     MEDIA_BUCKET_NAME: ${self:service}-media-${sls:stage}
@@ -25,9 +26,11 @@ provider:
             - dynamodb:Scan
             - dynamodb:GetItem
             - dynamodb:PutItem
+            - dynamodb:UpdateItem
           Resource: 
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.EVENTS_TABLE}"
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.TICKETS_TABLE}"
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.HISTORY_TABLE}"
         - Effect: Allow
           Action:
             - sqs:SendMessage
@@ -154,6 +157,16 @@ functions:
               Fn::GetAtt:
                 - CognitoUserPool
                 - Arn
+  recordAnalytics:
+    handler: src/functions/ticket/recordAnalytics.handler
+    events:
+      - eventBridge:
+          eventBus: { Ref: EventBus }
+          pattern:
+            source:
+              - "com.cloudticket"
+            detail-type:
+              - "TicketPurchased"
 
 resources:
   - ${file(resources/dynamodb.yml)}

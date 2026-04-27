@@ -23,8 +23,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       name: body.name,
       date: body.date || new Date().toISOString(),
       price: body.price,
+      basePrice: body.basePrice || body.price,
       totalTickets: body.totalTickets,
       availableTickets: body.totalTickets,
+      category: body.category || "Genel",
+      tags: body.tags || [],
       imageUrl: body.imageUrl,
       createdAt: new Date().toISOString()
     };

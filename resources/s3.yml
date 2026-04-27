@@ -5,9 +5,9 @@ Resources:
       BucketName: ${self:provider.environment.MEDIA_BUCKET_NAME}
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
-        BlockPublicPolicy: true
+        BlockPublicPolicy: false
         IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+        RestrictPublicBuckets: false
       CorsConfiguration:
         CorsRules:
           - AllowedOrigins:
@@ -20,3 +20,16 @@ Resources:
               - POST
               - HEAD
             MaxAge: 3000
+
+  MediaBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: { Ref: MediaBucket }
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicReadQRCodes
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: "arn:aws:s3:::${self:provider.environment.MEDIA_BUCKET_NAME}/qrcodes/*"
