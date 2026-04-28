@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { createEvent, getUploadUrl, uploadFileToS3 } from '../api';
 import { toast } from 'react-toastify';
 import { X, Calendar, DollarSign, Type, Upload } from 'lucide-react';
@@ -13,7 +13,7 @@ interface CreateEventModalProps {
 
 export default function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     const queryClient = useQueryClient();
-    const [formData, setFormData] = useState({ name: '', date: '', price: '', totalTickets: '' });
+    const [formData, setFormData] = useState({ name: '', date: '', price: '', totalTickets: '', basePrice: '', category: 'Konser', tags: '' });
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,17 +49,20 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                 imageKey = key;
             }
 
-            // 3. Etkinliği oluştur (resim key'i ile)
+            // 3. Etkinliği oluştur (resim key'i ile ve AI metadata ile)
             await createEvent({
                 name: formData.name,
                 date: formData.date,
                 price: Number(formData.price),
+                basePrice: formData.basePrice ? Number(formData.basePrice) : Number(formData.price),
+                category: formData.category,
+                tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
                 totalTickets: Number(formData.totalTickets),
                 imageUrl: imageKey,
             });
 
             toast.success('Etkinlik oluşturma talebi kuyruğa alındı (202 Accepted).');
-            setFormData({ name: '', date: '', price: '', totalTickets: '' });
+            setFormData({ name: '', date: '', price: '', totalTickets: '', basePrice: '', category: 'Konser', tags: '' });
             setFile(null);
             onClose();
 
@@ -153,6 +156,48 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                                 placeholder="0.00"
                                                 value={formData.price}
                                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-slate-700">Orijinal (Baz) Fiyat (TL)</label>
+                                        <div className="relative">
+                                            <DollarSign className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
+                                            <input
+                                                type="number"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                placeholder="İndirimsiz/Gerçek Değer"
+                                                value={formData.basePrice}
+                                                onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-slate-700">Kategori</label>
+                                            <select
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-600"
+                                                value={formData.category}
+                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                            >
+                                                <option value="Konser">Konser</option>
+                                                <option value="Tiyatro">Tiyatro</option>
+                                                <option value="Stand-up">Stand-up</option>
+                                                <option value="Festival">Festival</option>
+                                                <option value="Spor">Spor</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-slate-700">Etiketler</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                placeholder="rock, acikhava, yaz"
+                                                value={formData.tags}
+                                                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                                             />
                                         </div>
                                     </div>

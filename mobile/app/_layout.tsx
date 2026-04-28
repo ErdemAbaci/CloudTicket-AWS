@@ -8,16 +8,32 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import { Amplify } from 'aws-amplify';
+import { signIn } from 'aws-amplify/auth';
 import { Authenticator } from '@aws-amplify/ui-react-native';
 
 Amplify.configure({
   Auth: {
     Cognito: {
-      userPoolId: process.env.EXPO_PUBLIC_USER_POOL_ID || 'eu-central-dummy',
-      userPoolClientId: process.env.EXPO_PUBLIC_USER_POOL_CLIENT_ID || 'dummy',
+      userPoolId: process.env.EXPO_PUBLIC_USER_POOL_ID || '',
+      userPoolClientId: process.env.EXPO_PUBLIC_USER_POOL_CLIENT_ID || '',
+      loginWith: {
+        email: true,
+      },
     },
   },
 });
+
+const authServices = {
+  async handleSignIn(input: Parameters<typeof signIn>[0]) {
+    return signIn({
+      ...input,
+      options: {
+        ...input.options,
+        authFlowType: 'USER_PASSWORD_AUTH',
+      },
+    });
+  },
+};
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -28,7 +44,7 @@ export default function RootLayout() {
 
   return (
     <Authenticator.Provider>
-      <Authenticator>
+      <Authenticator loginMechanisms={['email']} services={authServices}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

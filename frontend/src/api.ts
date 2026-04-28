@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { toast } from 'react-toastify';
 
@@ -7,7 +7,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(
-    async (config: any) => {
+    async (config: InternalAxiosRequestConfig) => {
         try {
             const session = await fetchAuthSession();
             const token = session.tokens?.idToken?.toString();
@@ -20,17 +20,17 @@ api.interceptors.request.use(
         }
         return config;
     },
-    (error: any) => {
+    (error: AxiosError) => {
         return Promise.reject(error);
     }
 );
 
 // --- GLOBAL ERROR HANDLER ---
 api.interceptors.response.use(
-    (response: any) => {
+    (response: AxiosResponse) => {
         return response;
     },
-    (error: any) => {
+    (error: AxiosError<{ error?: string }>) => {
         // Sunucudan (Backend'den) dönen bir hata varsa görelim
         const serverError = error.response?.data?.error || "Sunucuyla iletişim kurulamadı";
         
@@ -49,6 +49,7 @@ export const getEvents = () => api.get('/events');
 export const getEvent = (id: string) => api.get(`/event/${id}`);
 export const createEvent = (data: { name: string; date: string; price: number; totalTickets: number; imageUrl?: string; category?: string; tags?: string[]; basePrice?: number }) => api.post('/event', data);
 export const purchaseTicket = (id: string) => api.post(`/event/${id}/purchase`);
+export const getMyTickets = () => api.get('/my-tickets');
 
 // --- S3 UPLOAD ---
 export const getUploadUrl = async (token: string, contentType: string) => {

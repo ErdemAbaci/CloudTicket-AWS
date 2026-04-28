@@ -31,7 +31,7 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
             await purchaseTicket(eventId);
             toast.success("Bilet başarıyla alındı!");
             refetch(); // Stok bilgisini tazelemek için
-        } catch (error) {
+        } catch {
             // Toast api.ts içerisinde global olarak hallediliyor
         } finally {
             setIsPurchasing(false);
@@ -84,10 +84,39 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
                                     </div>
                                 ) : event ? (
                                     <div className="space-y-4">
-                                        <div className="bg-indigo-50 p-4 rounded-xl">
-                                            <h4 className="font-bold text-indigo-900 text-lg">{event.name}</h4>
-                                            <p className="text-indigo-600 text-sm font-mono mt-1">{event.id}</p>
+                                        {event.imageUrl && (
+                                            <div className="w-full h-48 rounded-xl overflow-hidden mb-4 bg-slate-100 flex-shrink-0">
+                                                <img 
+                                                    src={`${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}`} 
+                                                    alt={event.name} 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="bg-indigo-50 p-4 rounded-xl flex justify-between items-start">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="font-bold text-indigo-900 text-lg">{event.name}</h4>
+                                                    {event.category && (
+                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-200 text-indigo-800 uppercase tracking-wider">
+                                                            {event.category}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-indigo-600 text-xs font-mono">{event.id}</p>
+                                            </div>
                                         </div>
+
+                                        {event.tags && event.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {event.tags.map((tag: string, index: number) => (
+                                                    <span key={index} className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
 
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-3 text-slate-600">
@@ -107,9 +136,14 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
 
                                             <div className="flex items-center gap-3 text-slate-600">
                                                 <Tag className="w-5 h-5 text-slate-400" />
-                                                <div>
+                                                <div className="flex flex-col">
                                                     <p className="text-xs text-slate-400">Fiyat</p>
-                                                    <p className="font-medium text-emerald-600">{event.price} ₺</p>
+                                                    <div className="flex items-baseline gap-2">
+                                                        <p className="font-bold text-emerald-600 text-lg">{event.price} ₺</p>
+                                                        {event.basePrice && event.basePrice !== event.price && (
+                                                            <p className="text-xs text-slate-400 line-through">{event.basePrice} ₺</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
