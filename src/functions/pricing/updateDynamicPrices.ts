@@ -1,5 +1,5 @@
 import { ScheduledEvent } from "aws-lambda";
-import { listUpcomingEventsForPricing, updateEventPrice } from "../../db/eventRepository";
+import { listUpcomingEventsForPricing, updateEventPrice } from "../../db/pricingRepository";
 import { calculateDynamicPrice } from "../../services/dynamicPricing";
 
 export const handler = async (_event: ScheduledEvent) => {

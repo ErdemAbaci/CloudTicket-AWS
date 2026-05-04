@@ -1,13 +1,12 @@
 import { EventBridgeEvent } from "aws-lambda";
 import * as QRCode from "qrcode";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { docClient, s3Client } from "../../db/client";
-import { PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { s3Client } from "../../db/client";
 import { randomUUID } from "crypto";
 import { TicketPurchasedDetail } from "../../types";
+import { getEventById } from "../../db/eventRepository";
+import { createTicketRecord } from "../../db/ticketRepository";
 
-const TICKETS_TABLE = process.env.TICKETS_TABLE || "";
-const EVENTS_TABLE = process.env.EVENTS_TABLE || "";
 const MEDIA_BUCKET_NAME = process.env.MEDIA_BUCKET_NAME || "";
 
 export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketPurchasedDetail>) => {
@@ -15,13 +14,9 @@ export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketP
     const { eventId, userId, purchasedAt } = event.detail;
     const ticketId = randomUUID();
 
-    // Etkinlik detayını çek (Denormalizasyon için)
-    const eventResult = await docClient.send(new GetCommand({
-      TableName: EVENTS_TABLE,
-      Key: { id: eventId }
-    }));
-    const eventName = eventResult.Item?.name || "Bilinmeyen Etkinlik";
-    const eventDate = eventResult.Item?.date || "";
+    const ticketEvent = await getEventById(eventId);
+    const eventName = ticketEvent?.name || "Bilinmeyen Etkinlik";
+    const eventDate = ticketEvent?.date || "";
     
     // QR Code içeriği olarak bilet ID ve etkinlik ID gizliyoruz
     const qrData = JSON.stringify({ ticketId, eventId, userId });
@@ -40,20 +35,16 @@ export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketP
     // Public URL formatı
     const qrUrl = `https://${MEDIA_BUCKET_NAME}.s3.eu-central-1.amazonaws.com/${objectKey}`;
 
-    // 2. DynamoDB'ye Bilet Kaydı Ekle
-    await docClient.send(new PutCommand({
-      TableName: TICKETS_TABLE,
-      Item: {
-        userId,
-        ticketId,
-        eventId,
-        eventName,
-        eventDate,
-        purchasedAt,
-        qrUrl,
-        status: "ACTIVE" // İleride güvenlik kamerasıyla okutulunca "USED" olabilir
-      }
-    }));
+    await createTicketRecord({
+      userId,
+      ticketId,
+      eventId,
+      eventName,
+      eventDate,
+      purchasedAt,
+      qrUrl,
+      status: "ACTIVE",
+    });
 
     console.log(`Bilet ${ticketId} oluşturuldu. S3 Yüklemesi başarılı! Kullanıcı: ${userId}`);
 

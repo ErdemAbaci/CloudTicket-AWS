@@ -2,14 +2,15 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { formatResponse } from "../../utils/response";
 import { decrementAvailableTickets } from "../../db/eventRepository";
 import { publishTicketPurchased } from "../../services/eventService";
+import { getUserIdFromEvent } from "../../utils/auth";
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     const id = event.pathParameters?.id;
     if (!id) return formatResponse(400, { error: "Etkinlik ID gerekli" });
 
-    // Cognito'dan kullanıcı bilgisini al (Cognito Authorizer kullanıldığı için garanti)
-    const userId = event.requestContext.authorizer?.claims?.sub || event.requestContext.authorizer?.claims?.username || "anonymous";
+    const userId = getUserIdFromEvent(event);
+    if (!userId) return formatResponse(401, { error: "Kimlik doğrulanamadı" });
 
     // Atomic kilit mekanizması
     try {

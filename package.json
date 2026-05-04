@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "test:pricing": "tsc --outDir /tmp/ticketmind-pricing-tests --module commonjs --skipLibCheck && node --test /tmp/ticketmind-pricing-tests/tests/dynamicPricing.test.js"
+  },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.160",
     "@types/node": "^25.2.0",
