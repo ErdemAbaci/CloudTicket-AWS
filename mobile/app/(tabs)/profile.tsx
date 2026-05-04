@@ -37,7 +37,7 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.headerCard}>
         <View style={styles.avatar}>
-          <MaterialIcons name="person" size={30} color="#1D4ED8" />
+          <MaterialIcons name="person" size={30} color="#0F172A" />
         </View>
         <View style={styles.headerText}>
           <Text style={styles.eyebrow}>Hesap</Text>
@@ -65,7 +65,7 @@ export default function ProfileScreen() {
         {roadmapItems.map((item) => (
           <View key={item.title} style={styles.roadmapItem}>
             <View style={styles.roadmapIcon}>
-              <MaterialIcons name={item.icon as any} size={21} color="#1D4ED8" />
+              <MaterialIcons name={item.icon as any} size={21} color="#0F172A" />
             </View>
             <View style={styles.roadmapBody}>
               <View style={styles.roadmapTopRow}>
@@ -103,7 +103,7 @@ export default function ProfileScreen() {
 function QuickStat({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
     <View style={styles.quickStat}>
-      <MaterialIcons name={icon as any} size={22} color="#1D4ED8" />
+      <MaterialIcons name={icon as any} size={22} color="#0F172A" />
       <Text style={styles.quickValue}>{value}</Text>
       <Text style={styles.quickLabel}>{label}</Text>
     </View>
@@ -113,7 +113,7 @@ function QuickStat({ label, value, icon }: { label: string; value: string; icon:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F4EF',
   },
   content: {
     paddingHorizontal: 20,
@@ -124,18 +124,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.9)',
     padding: 16,
     marginBottom: 16,
   },
   avatar: {
     width: 58,
     height: 58,
-    borderRadius: 8,
-    backgroundColor: '#DBEAFE',
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eyebrow: {
-    color: '#1D4ED8',
+    color: '#64748B',
     fontSize: 12,
     fontWeight: '900',
     marginBottom: 4,
@@ -165,10 +165,10 @@ const styles = StyleSheet.create({
   },
   quickStat: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.9)',
     padding: 12,
   },
   quickValue: {
@@ -183,10 +183,10 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   panel: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.9)',
     padding: 16,
     marginBottom: 16,
   },
@@ -213,8 +213,8 @@ const styles = StyleSheet.create({
   roadmapIcon: {
     width: 38,
     height: 38,
-    borderRadius: 8,
-    backgroundColor: '#DBEAFE',
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -240,13 +240,13 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   statusPill: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   statusText: {
-    color: '#1D4ED8',
+    color: '#0F172A',
     fontSize: 11,
     fontWeight: '900',
   },
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   signOutButton: {
     height: 48,
-    borderRadius: 8,
+    borderRadius: 999,
     backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FECACA',

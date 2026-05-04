@@ -78,7 +78,7 @@ export default function TicketsScreen() {
       <View style={styles.passCard}>
         <View style={styles.passHeader}>
           <View style={styles.passIcon}>
-            <MaterialIcons name="confirmation-number" size={22} color="#1D4ED8" />
+            <MaterialIcons name="confirmation-number" size={22} color="#0F172A" />
           </View>
           <View style={styles.passHeaderText}>
             <Text style={styles.eventName} numberOfLines={2}>
@@ -120,7 +120,7 @@ export default function TicketsScreen() {
   if (loading && tickets.length === 0) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1D4ED8" />
+        <ActivityIndicator size="large" color="#0F172A" />
         <Text style={styles.centeredText}>Biletlerin hazirlaniyor</Text>
       </View>
     );
@@ -130,7 +130,7 @@ export default function TicketsScreen() {
     return (
       <View style={styles.centered}>
         <View style={styles.emptyIcon}>
-          <MaterialIcons name="sync-problem" size={28} color="#1D4ED8" />
+          <MaterialIcons name="sync-problem" size={28} color="#0F172A" />
         </View>
         <Text style={styles.emptyTitle}>{error}</Text>
         <Pressable style={styles.retryButton} onPress={fetchTickets}>
@@ -156,7 +156,7 @@ export default function TicketsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <MaterialIcons name="confirmation-number" size={28} color="#1D4ED8" />
+              <MaterialIcons name="confirmation-number" size={28} color="#0F172A" />
             </View>
             <Text style={styles.emptyTitle}>Aktif biletin yok</Text>
             <Text style={styles.emptySubtitle}>
@@ -187,7 +187,7 @@ function Meta({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F4EF',
   },
   listContent: {
     paddingHorizontal: 20,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   eyebrow: {
-    color: '#1D4ED8',
+    color: '#64748B',
     fontSize: 13,
     fontWeight: '800',
     marginBottom: 8,
@@ -216,10 +216,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   passCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.9)',
     marginBottom: 16,
     overflow: 'hidden',
   },
@@ -232,8 +232,8 @@ const styles = StyleSheet.create({
   passIcon: {
     width: 42,
     height: 42,
-    borderRadius: 8,
-    backgroundColor: '#DBEAFE',
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F4EF',
     zIndex: 2,
   },
   cutoutRight: {
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F4EF',
     zIndex: 2,
   },
   qrSection: {
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   qrFrame: {
     width: 218,
     height: 218,
-    borderRadius: 8,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   ticketMetaGrid: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(255,255,255,0.56)',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
     padding: 16,
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F7F4EF',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -354,8 +354,8 @@ const styles = StyleSheet.create({
   emptyIcon: {
     width: 58,
     height: 58,
-    borderRadius: 8,
-    backgroundColor: '#DBEAFE',
+    borderRadius: 29,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -376,8 +376,8 @@ const styles = StyleSheet.create({
   retryButton: {
     marginTop: 18,
     height: 44,
-    borderRadius: 8,
-    backgroundColor: '#1D4ED8',
+    borderRadius: 999,
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     paddingHorizontal: 18,
   },

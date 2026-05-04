@@ -1,16 +1,23 @@
-import { useQuery } from '@tanstack/react-query';
-import { getEvent, purchaseTicket } from '../api';
-import { toast } from 'react-toastify';
-import { useState } from 'react';
-import { X, Calendar, Tag, Clock } from 'lucide-react';
-import { Fragment } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import { Calendar, Clock, MapPin, Tag, X } from 'lucide-react';
+
+import { getEvent, purchaseTicket } from '../api';
 
 interface EventDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     eventId: string | null;
 }
+
+const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY',
+        maximumFractionDigits: 0,
+    }).format(value);
 
 export default function EventDetailModal({ isOpen, onClose, eventId }: EventDetailModalProps) {
     const [isPurchasing, setIsPurchasing] = useState(false);
@@ -29,10 +36,10 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
         setIsPurchasing(true);
         try {
             await purchaseTicket(eventId);
-            toast.success("Bilet başarıyla alındı!");
-            refetch(); // Stok bilgisini tazelemek için
+            toast.success('Bilet başarıyla alındı!');
+            refetch();
         } catch {
-            // Toast api.ts içerisinde global olarak hallediliyor
+            // Toast api.ts içinde global olarak gösteriliyor.
         } finally {
             setIsPurchasing(false);
         }
@@ -43,146 +50,179 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
             <Dialog as="div" className="relative z-50" onClose={onClose}>
                 <Transition.Child
                     as={Fragment}
-                    enter="ease-out duration-300"
+                    enter="ease-out duration-200"
                     enterFrom="opacity-0"
                     enterTo="opacity-100"
-                    leave="ease-in duration-200"
+                    leave="ease-in duration-150"
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" />
+                    <div className="fixed inset-0 bg-slate-950/45 backdrop-blur-sm" />
                 </Transition.Child>
 
                 <div className="fixed inset-0 overflow-y-auto">
                     <div className="flex min-h-full items-center justify-center p-4 text-center">
                         <Transition.Child
                             as={Fragment}
-                            enter="ease-out duration-300"
-                            enterFrom="opacity-0 scale-95"
-                            enterTo="opacity-100 scale-100"
-                            leave="ease-in duration-200"
-                            leaveFrom="opacity-100 scale-100"
-                            leaveTo="opacity-0 scale-95"
+                            enter="ease-out duration-200"
+                            enterFrom="opacity-0 translate-y-3 scale-95"
+                            enterTo="opacity-100 translate-y-0 scale-100"
+                            leave="ease-in duration-150"
+                            leaveFrom="opacity-100 translate-y-0 scale-100"
+                            leaveTo="opacity-0 translate-y-3 scale-95"
                         >
-                            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                <div className="flex justify-between items-start mb-4">
-                                    <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900">
-                                        Etkinlik Detayı
-                                    </Dialog.Title>
-                                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
+                            <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-[32px] border border-white bg-[#F7F4EF] p-3 text-left align-middle shadow-[0_32px_100px_rgba(15,23,42,0.28)] transition-all">
+                                <div className="overflow-hidden rounded-[26px] bg-white/90">
+                                    <div className="relative min-h-60 bg-slate-950">
+                                        {event?.imageUrl ? (
+                                            <img
+                                                src={`${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}`}
+                                                alt={event.name}
+                                                className="absolute inset-0 h-full w-full object-cover opacity-80"
+                                            />
+                                        ) : (
+                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,#bfdbfe_0,#475569_35%,#0f172a_76%)]" />
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
+                                        <button
+                                            type="button"
+                                            onClick={onClose}
+                                            aria-label="Kapat"
+                                            className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-slate-950"
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
 
-                                {isLoading ? (
-                                    <div className="flex justify-center py-8">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                                        <div className="relative flex min-h-60 flex-col justify-end p-6 text-white">
+                                            <div className="mb-3 flex flex-wrap gap-2">
+                                                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-slate-950">
+                                                    {event?.category || 'Etkinlik'}
+                                                </span>
+                                                {event?.availableTickets !== undefined && (
+                                                    <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-black text-white backdrop-blur">
+                                                        {event.availableTickets <= 0 ? 'Tükendi' : `${event.availableTickets} bilet kaldı`}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <Dialog.Title as="h3" className="text-3xl font-black leading-tight tracking-tight">
+                                                {event?.name || 'Etkinlik Detayı'}
+                                            </Dialog.Title>
+                                        </div>
                                     </div>
-                                ) : isError ? (
-                                    <div className="text-red-500 text-center py-4">
-                                        Etkinlik detayları yüklenemedi.
-                                    </div>
-                                ) : event ? (
-                                    <div className="space-y-4">
-                                        {event.imageUrl && (
-                                            <div className="w-full h-48 rounded-xl overflow-hidden mb-4 bg-slate-100 flex-shrink-0">
-                                                <img 
-                                                    src={`${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}`} 
-                                                    alt={event.name} 
-                                                    className="w-full h-full object-cover"
+
+                                    {isLoading ? (
+                                        <div className="flex justify-center py-16">
+                                            <div className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-slate-950" />
+                                        </div>
+                                    ) : isError ? (
+                                        <div className="m-5 rounded-[22px] border border-red-100 bg-red-50 px-5 py-10 text-center font-bold text-red-600">
+                                            Etkinlik detayları yüklenemedi.
+                                        </div>
+                                    ) : event ? (
+                                        <div className="space-y-5 p-5">
+                                            {event.tags && event.tags.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {event.tags.map((tag: string, index: number) => (
+                                                        <span
+                                                            key={index}
+                                                            className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600"
+                                                        >
+                                                            #{tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <InfoItem
+                                                    icon={<Calendar className="h-5 w-5" />}
+                                                    label="Tarih"
+                                                    value={new Date(event.date).toLocaleDateString('tr-TR', {
+                                                        weekday: 'long',
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                    })}
+                                                />
+                                                <InfoItem
+                                                    icon={<MapPin className="h-5 w-5" />}
+                                                    label="Mekan"
+                                                    value="TicketMind sahnesi"
+                                                />
+                                                <InfoItem
+                                                    icon={<Tag className="h-5 w-5" />}
+                                                    label="Başlayan fiyat"
+                                                    value={formatCurrency(event.price)}
+                                                    helper={
+                                                        event.basePrice && event.basePrice !== event.price
+                                                            ? `${formatCurrency(event.basePrice)} baz fiyat`
+                                                            : 'Güncel satış fiyatı'
+                                                    }
+                                                />
+                                                <InfoItem
+                                                    icon={<Clock className="h-5 w-5" />}
+                                                    label="Oluşturulma"
+                                                    value={event.createdAt ? new Date(event.createdAt).toLocaleString('tr-TR') : '-'}
                                                 />
                                             </div>
-                                        )}
 
-                                        <div className="bg-indigo-50 p-4 rounded-xl flex justify-between items-start">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h4 className="font-bold text-indigo-900 text-lg">{event.name}</h4>
-                                                    {event.category && (
-                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-200 text-indigo-800 uppercase tracking-wider">
-                                                            {event.category}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-indigo-600 text-xs font-mono">{event.id}</p>
+                                            <div className="rounded-[24px] bg-[#F7F4EF] p-4">
+                                                <p className="text-xs font-black uppercase tracking-wide text-slate-400">Etkinlik ID</p>
+                                                <p className="mt-1 break-all font-mono text-xs font-bold text-slate-600">{event.id}</p>
+                                            </div>
+
+                                            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition-colors hover:bg-slate-50"
+                                                    onClick={onClose}
+                                                >
+                                                    Kapat
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isPurchasing || (event.availableTickets !== undefined && event.availableTickets <= 0)}
+                                                    className="inline-flex justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                                    onClick={handlePurchase}
+                                                >
+                                                    {isPurchasing
+                                                        ? 'İşleniyor...'
+                                                        : event.availableTickets !== undefined && event.availableTickets <= 0
+                                                            ? 'Tükendi'
+                                                            : 'Bilet Satın Al'}
+                                                </button>
                                             </div>
                                         </div>
-
-                                        {event.tags && event.tags.length > 0 && (
-                                            <div className="flex flex-wrap gap-2">
-                                                {event.tags.map((tag: string, index: number) => (
-                                                    <span key={index} className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                                                        #{tag}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3 text-slate-600">
-                                                <Calendar className="w-5 h-5 text-slate-400" />
-                                                <div>
-                                                    <p className="text-xs text-slate-400">Tarih</p>
-                                                    <p className="font-medium">
-                                                        {new Date(event.date).toLocaleDateString('tr-TR', {
-                                                            weekday: 'long',
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                        })}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 text-slate-600">
-                                                <Tag className="w-5 h-5 text-slate-400" />
-                                                <div className="flex flex-col">
-                                                    <p className="text-xs text-slate-400">Fiyat</p>
-                                                    <div className="flex items-baseline gap-2">
-                                                        <p className="font-bold text-emerald-600 text-lg">{event.price} ₺</p>
-                                                        {event.basePrice && event.basePrice !== event.price && (
-                                                            <p className="text-xs text-slate-400 line-through">{event.basePrice} ₺</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 text-slate-600">
-                                                <Clock className="w-5 h-5 text-slate-400" />
-                                                <div>
-                                                    <p className="text-xs text-slate-400">Oluşturulma Tarihi</p>
-                                                    <p className="font-medium text-sm">
-                                                        {event.createdAt ? new Date(event.createdAt).toLocaleString('tr-TR') : '-'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-3">
-                                            <button
-                                                type="button"
-                                                className="inline-flex justify-center rounded-xl border border-transparent bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
-                                                onClick={onClose}
-                                            >
-                                                Kapat
-                                            </button>
-                                            
-                                            <button
-                                                type="button"
-                                                disabled={isPurchasing || (event.availableTickets !== undefined && event.availableTickets <= 0)}
-                                                className="inline-flex justify-center rounded-xl border border-transparent bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                onClick={handlePurchase}
-                                            >
-                                                {isPurchasing ? 'İşleniyor...' : (event.availableTickets !== undefined && event.availableTickets <= 0 ? 'Tükendi' : 'Bilet Satın Al')}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : null}
+                                    ) : null}
+                                </div>
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>
                 </div>
             </Dialog>
         </Transition>
+    );
+}
+
+function InfoItem({
+    icon,
+    label,
+    value,
+    helper,
+}: {
+    icon: ReactNode;
+    label: string;
+    value: string;
+    helper?: string;
+}) {
+    return (
+        <div className="rounded-[22px] border border-slate-100 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                {icon}
+            </div>
+            <p className="text-xs font-black uppercase tracking-wide text-slate-400">{label}</p>
+            <p className="mt-1 text-sm font-black text-slate-950">{value}</p>
+            {helper && <p className="mt-1 text-xs font-semibold text-slate-500">{helper}</p>}
+        </div>
     );
 }

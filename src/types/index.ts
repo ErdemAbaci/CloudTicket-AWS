@@ -8,8 +8,16 @@ export interface TicketEvent {
   availableTickets: number;
   category?: string;
   tags?: string[];
+  searchText?: string;
   imageUrl?: string;
   createdAt: string;
+}
+
+export interface EventSearchParams {
+  search?: string;
+  category?: string;
+  tags?: string[];
+  limit?: number;
 }
 
 export interface TicketPurchasedDetail {

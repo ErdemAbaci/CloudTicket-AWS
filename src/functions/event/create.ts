@@ -4,6 +4,16 @@ import { formatResponse } from "../../utils/response";
 import { publishTicketEvent } from "../../services/eventService";
 import { TicketEvent } from "../../types";
 
+const normalizeSearchText = (...values: Array<string | string[] | undefined>) => {
+  return values
+    .flatMap((value) => Array.isArray(value) ? value : [value])
+    .filter((value): value is string => Boolean(value))
+    .join(" ")
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     if (!event.body) {
@@ -28,6 +38,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       availableTickets: body.totalTickets,
       category: body.category || "Genel",
       tags: body.tags || [],
+      searchText: normalizeSearchText(body.name, body.category || "Genel", body.tags),
       imageUrl: body.imageUrl,
       createdAt: new Date().toISOString()
     };

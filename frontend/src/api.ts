@@ -45,7 +45,12 @@ api.interceptors.response.use(
 );
 
 export const getHealth = () => api.get('/hello');
-export const getEvents = () => api.get('/events');
+export const getEvents = (params?: { search?: string; category?: string; tags?: string[]; limit?: number }) => api.get('/events', {
+    params: {
+        ...params,
+        tags: params?.tags?.join(','),
+    },
+});
 export const getEvent = (id: string) => api.get(`/event/${id}`);
 export const createEvent = (data: { name: string; date: string; price: number; totalTickets: number; imageUrl?: string; category?: string; tags?: string[]; basePrice?: number }) => api.post('/event', data);
 export const purchaseTicket = (id: string) => api.post(`/event/${id}/purchase`);
