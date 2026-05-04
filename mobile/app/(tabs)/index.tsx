@@ -25,6 +25,10 @@ interface EventData {
   category?: string;
   tags?: string[];
   basePrice?: number;
+  pricingTrend?: 'discount' | 'surge' | 'stable';
+  discountPercent?: number;
+  pricingReason?: string;
+  lastPriceUpdateAt?: string;
 }
 
 const categories = ['Tümü', 'Konser', 'Festival', 'Tiyatro', 'Stand-up', 'Spor'];
@@ -57,6 +61,18 @@ const getRemainingLabel = (event: EventData) => {
   }
 
   return `${event.availableTickets} bilet kaldı`;
+};
+
+const getDiscountPercent = (event: EventData) => {
+  if (event.discountPercent && event.discountPercent > 0) {
+    return event.discountPercent;
+  }
+
+  if (event.basePrice && event.basePrice > event.price) {
+    return Math.round(((event.basePrice - event.price) / event.basePrice) * 100);
+  }
+
+  return 0;
 };
 
 export default function HomeScreen() {
@@ -183,7 +199,12 @@ export default function HomeScreen() {
               {featuredEvent.name}
             </Text>
             <View style={styles.featuredFooter}>
-              <Text style={styles.featuredPrice}>{featuredEvent.price} TL</Text>
+              <View style={styles.featuredPriceGroup}>
+                <Text style={styles.featuredPrice}>{featuredEvent.price} TL</Text>
+                {getDiscountPercent(featuredEvent) > 0 ? (
+                  <Text style={styles.featuredDiscount}>%{getDiscountPercent(featuredEvent)} indirim</Text>
+                ) : null}
+              </View>
               <Pressable style={styles.darkButton} onPress={() => setSelectedEvent(featuredEvent)}>
                 <Text style={styles.darkButtonText}>İncele</Text>
               </Pressable>
@@ -254,7 +275,15 @@ export default function HomeScreen() {
           <View style={styles.cardFooter}>
             <View>
               <Text style={styles.priceLabel}>Başlayan fiyat</Text>
-              <Text style={styles.price}>{item.price} TL</Text>
+              <View style={styles.priceRow}>
+                <Text style={styles.price}>{item.price} TL</Text>
+                {getDiscountPercent(item) > 0 ? (
+                  <Text style={styles.discountBadge}>%{getDiscountPercent(item)}</Text>
+                ) : null}
+              </View>
+              {getDiscountPercent(item) > 0 && item.basePrice ? (
+                <Text style={styles.oldPrice}>{item.basePrice} TL yerine</Text>
+              ) : null}
             </View>
 
             <Pressable
@@ -334,7 +363,12 @@ function RecommendationCard({ event, onPress }: { event: EventData; onPress: () 
       <Text style={styles.recommendationDate}>{formatDate(event.date)}</Text>
       <View style={styles.recommendationFooter}>
         <Text style={styles.recommendationTag}>{event.category || 'Genel'}</Text>
-        <Text style={styles.recommendationPrice}>{event.price} TL</Text>
+        <View style={styles.recommendationPriceGroup}>
+          <Text style={styles.recommendationPrice}>{event.price} TL</Text>
+          {getDiscountPercent(event) > 0 ? (
+            <Text style={styles.recommendationDiscount}>Fiyat düştü</Text>
+          ) : null}
+        </View>
       </View>
     </Pressable>
   );
@@ -381,9 +415,21 @@ function EventDetailSheet({
             <View style={styles.detailInfoGrid}>
               <DetailInfo icon="event" label="Tarih" value={formatLongDate(event.date)} />
               <DetailInfo icon="place" label="Mekan" value="TicketMind sahnesi" />
-              <DetailInfo icon="local-offer" label="Başlayan fiyat" value={`${event.price} TL`} />
+              <DetailInfo
+                icon="local-offer"
+                label="Başlayan fiyat"
+                value={`${event.price} TL`}
+                helper={getDiscountPercent(event) > 0 && event.basePrice ? `${event.basePrice} TL yerine` : undefined}
+              />
               <DetailInfo icon="confirmation-number" label="Durum" value={getRemainingLabel(event)} />
             </View>
+
+            {getDiscountPercent(event) > 0 ? (
+              <View style={styles.detailDiscountBox}>
+                <Text style={styles.detailDiscountTitle}>%{getDiscountPercent(event)} indirim uygulandı</Text>
+                <Text style={styles.detailDiscountText}>AI fiyat motoru satış hızına göre bu etkinliğin fiyatını düşürdü.</Text>
+              </View>
+            ) : null}
 
             {event.tags && event.tags.length > 0 ? (
               <View style={styles.detailTags}>
@@ -422,7 +468,17 @@ function EventDetailSheet({
   );
 }
 
-function DetailInfo({ icon, label, value }: { icon: keyof typeof MaterialIcons.glyphMap; label: string; value: string }) {
+function DetailInfo({
+  icon,
+  label,
+  value,
+  helper,
+}: {
+  icon: keyof typeof MaterialIcons.glyphMap;
+  label: string;
+  value: string;
+  helper?: string;
+}) {
   return (
     <View style={styles.detailInfoCard}>
       <View style={styles.detailInfoIcon}>
@@ -430,6 +486,7 @@ function DetailInfo({ icon, label, value }: { icon: keyof typeof MaterialIcons.g
       </View>
       <Text style={styles.detailInfoLabel}>{label}</Text>
       <Text style={styles.detailInfoValue}>{value}</Text>
+      {helper ? <Text style={styles.detailInfoHelper}>{helper}</Text> : null}
     </View>
   );
 }
@@ -621,6 +678,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
   },
+  featuredPriceGroup: {
+    gap: 6,
+  },
+  featuredDiscount: {
+    alignSelf: 'flex-start',
+    color: '#047857',
+    backgroundColor: '#ECFDF5',
+    overflow: 'hidden',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: 11,
+    fontWeight: '900',
+  },
   darkButton: {
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.14)',
@@ -708,6 +779,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '900',
   },
+  recommendationPriceGroup: {
+    alignItems: 'flex-end',
+  },
+  recommendationDiscount: {
+    color: '#047857',
+    fontSize: 10,
+    fontWeight: '900',
+    marginTop: 2,
+  },
   eventCard: {
     flexDirection: 'row',
     gap: 14,
@@ -789,6 +869,28 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '900',
     marginTop: 2,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  discountBadge: {
+    color: '#047857',
+    backgroundColor: '#ECFDF5',
+    overflow: 'hidden',
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  oldPrice: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '800',
+    marginTop: 2,
+    textDecorationLine: 'line-through',
   },
   buyButton: {
     minWidth: 82,
@@ -923,6 +1025,30 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '900',
     marginTop: 4,
+  },
+  detailInfoHelper: {
+    color: '#047857',
+    fontSize: 11,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  detailDiscountBox: {
+    borderRadius: 24,
+    backgroundColor: '#ECFDF5',
+    padding: 16,
+    marginTop: 12,
+  },
+  detailDiscountTitle: {
+    color: '#047857',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  detailDiscountText: {
+    color: '#047857',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    marginTop: 5,
   },
   detailTags: {
     flexDirection: 'row',

@@ -1,6 +1,7 @@
 import { PutCommand, ScanCommand, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient } from "./client";
 import { EventSearchParams, TicketEvent } from "../types";
+import { PricingDecision } from "../services/dynamicPricing";
 
 const TABLE_NAME = process.env.EVENTS_TABLE || "";
 const DEFAULT_SEARCH_LIMIT = 60;
@@ -95,6 +96,16 @@ export const searchEvents = async (params: EventSearchParams) => {
     .slice(0, limit);
 };
 
+export const listUpcomingEventsForPricing = async (now = new Date()) => {
+  const events = await listAllEvents();
+  const nowTime = now.getTime();
+
+  return events.filter((event) => {
+    const eventTime = new Date(event.date).getTime();
+    return Number.isFinite(eventTime) && eventTime >= nowTime && event.availableTickets > 0;
+  });
+};
+
 export const getEventById = async (id: string) => {
   const result = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id } }));
   return result.Item;
@@ -109,5 +120,32 @@ export const decrementAvailableTickets = async (id: string) => {
     ExpressionAttributeValues: {
       ":dec": 1
     }
+  }));
+};
+
+export const updateEventPrice = async (id: string, decision: PricingDecision, updatedAt: string) => {
+  await docClient.send(new UpdateCommand({
+    TableName: TABLE_NAME,
+    Key: { id },
+    UpdateExpression: [
+      "SET price = :price",
+      "basePrice = :basePrice",
+      "minPrice = :minPrice",
+      "maxPrice = :maxPrice",
+      "lastPriceUpdateAt = :updatedAt",
+      "pricingReason = :reason",
+      "pricingTrend = :trend",
+      "discountPercent = :discountPercent",
+    ].join(", "),
+    ExpressionAttributeValues: {
+      ":price": decision.price,
+      ":basePrice": decision.basePrice,
+      ":minPrice": decision.minPrice,
+      ":maxPrice": decision.maxPrice,
+      ":updatedAt": updatedAt,
+      ":reason": decision.pricingReason,
+      ":trend": decision.pricingTrend,
+      ":discountPercent": decision.discountPercent,
+    },
   }));
 };

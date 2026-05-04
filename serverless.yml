@@ -167,6 +167,15 @@ functions:
               - "com.cloudticket"
             detail-type:
               - "TicketPurchased"
+  updateDynamicPrices:
+    handler: src/functions/pricing/updateDynamicPrices.handler
+    timeout: 30
+    events:
+      - schedule:
+          name: ${self:service}-dynamic-pricing-${sls:stage}
+          description: TicketMind dinamik fiyat motoru - her gece 03:00 Europe/Istanbul
+          rate: cron(0 0 * * ? *)
+          enabled: true
 
 resources:
   - ${file(resources/dynamodb.yml)}

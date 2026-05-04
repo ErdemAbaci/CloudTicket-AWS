@@ -27,6 +27,10 @@ interface EventData {
   date: string;
   price: number;
   basePrice?: number;
+  pricingTrend?: 'discount' | 'surge' | 'stable';
+  discountPercent?: number;
+  pricingReason?: string;
+  lastPriceUpdateAt?: string;
   availableTickets?: number;
   totalTickets?: number;
   category?: string;
@@ -71,6 +75,18 @@ const getRemainingLabel = (event: EventData) => {
   }
 
   return `${event.availableTickets} bilet kaldı`;
+};
+
+const getDiscountPercent = (event: EventData) => {
+  if (event.discountPercent && event.discountPercent > 0) {
+    return event.discountPercent;
+  }
+
+  if (event.basePrice && event.basePrice > event.price) {
+    return Math.round(((event.basePrice - event.price) / event.basePrice) * 100);
+  }
+
+  return 0;
 };
 
 function App() {
@@ -342,9 +358,7 @@ function FeaturedEvent({
           </p>
           <h2 className="max-w-xl text-4xl font-black leading-tight tracking-tight">{event.name}</h2>
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-slate-950">
-              {formatCurrency(event.price)}
-            </span>
+            <PricePill event={event} tone="light" />
             <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white backdrop-blur">
               Detayları gör
               <ChevronRight className="h-4 w-4" />
@@ -378,13 +392,15 @@ function SoftRecommendation({ event, onOpen }: { event?: EventData; onOpen: (id:
         <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600">
           {event.category || 'Genel'}
         </span>
-        <span className="text-sm font-black text-slate-950">{formatCurrency(event.price)}</span>
+        <CompactPrice event={event} />
       </div>
     </button>
   );
 }
 
 function EventCard({ event, onOpen }: { event: EventData; onOpen: (id: string) => void }) {
+  const discountPercent = getDiscountPercent(event);
+
   return (
     <button
       onClick={() => onOpen(event.id)}
@@ -400,6 +416,11 @@ function EventCard({ event, onOpen }: { event: EventData; onOpen: (id: string) =
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 via-emerald-50 to-amber-100">
             <Ticket className="h-12 w-12 text-slate-400" />
+          </div>
+        )}
+        {discountPercent > 0 && (
+          <div className="absolute right-4 top-4 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-black text-white shadow-sm">
+            %{discountPercent} indirim
           </div>
         )}
         <div className="absolute left-4 top-4 rounded-2xl bg-white/90 px-3 py-2 text-center shadow-sm backdrop-blur">
@@ -437,7 +458,7 @@ function EventCard({ event, onOpen }: { event: EventData; onOpen: (id: string) =
         <div className="mt-5 flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-slate-400">Başlayan fiyat</p>
-            <p className="text-lg font-black text-slate-950">{formatCurrency(event.price)}</p>
+            <PriceStack event={event} />
           </div>
           <span className="rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white">
             İncele
@@ -445,6 +466,66 @@ function EventCard({ event, onOpen }: { event: EventData; onOpen: (id: string) =
         </div>
       </div>
     </button>
+  );
+}
+
+function PricePill({ event, tone = 'dark' }: { event: EventData; tone?: 'dark' | 'light' }) {
+  const discountPercent = getDiscountPercent(event);
+
+  if (discountPercent > 0) {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-slate-950">
+        <span>{formatCurrency(event.price)}</span>
+        <span className="text-xs text-slate-400 line-through">{formatCurrency(event.basePrice || event.price)}</span>
+        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-700">
+          %{discountPercent} indirim
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className={`rounded-full px-4 py-2 text-sm font-black ${tone === 'light' ? 'bg-white text-slate-950' : 'bg-slate-100 text-slate-950'}`}>
+      {formatCurrency(event.price)}
+    </span>
+  );
+}
+
+function CompactPrice({ event }: { event: EventData }) {
+  const discountPercent = getDiscountPercent(event);
+
+  return (
+    <span className="text-right">
+      <span className="block text-sm font-black text-slate-950">{formatCurrency(event.price)}</span>
+      {discountPercent > 0 && (
+        <span className="block text-[11px] font-black text-emerald-700">
+          %{discountPercent} fiyat dustu
+        </span>
+      )}
+    </span>
+  );
+}
+
+function PriceStack({ event }: { event: EventData }) {
+  const discountPercent = getDiscountPercent(event);
+
+  return (
+    <div className="mt-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-lg font-black text-slate-950">{formatCurrency(event.price)}</p>
+        {discountPercent > 0 && (
+          <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-700">
+            %{discountPercent}
+          </span>
+        )}
+      </div>
+      {discountPercent > 0 && (
+        <p className="mt-0.5 text-xs font-bold text-slate-400">
+          <span className="line-through">{formatCurrency(event.basePrice || event.price)}</span>
+          <span className="ml-2 text-emerald-700">fiyat düştü</span>
+        </p>
+      )}
+    </div>
   );
 }
 

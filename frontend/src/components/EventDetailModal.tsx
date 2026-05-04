@@ -19,6 +19,18 @@ const formatCurrency = (value: number) =>
         maximumFractionDigits: 0,
     }).format(value);
 
+const getDiscountPercent = (event: { price: number; basePrice?: number; discountPercent?: number }) => {
+    if (event.discountPercent && event.discountPercent > 0) {
+        return event.discountPercent;
+    }
+
+    if (event.basePrice && event.basePrice > event.price) {
+        return Math.round(((event.basePrice - event.price) / event.basePrice) * 100);
+    }
+
+    return 0;
+};
+
 export default function EventDetailModal({ isOpen, onClose, eventId }: EventDetailModalProps) {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const { data: event, isLoading, isError, refetch } = useQuery({
@@ -120,6 +132,17 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
                                         </div>
                                     ) : event ? (
                                         <div className="space-y-5 p-5">
+                                            {getDiscountPercent(event) > 0 && (
+                                                <div className="rounded-[24px] border border-emerald-100 bg-emerald-50 p-4">
+                                                    <p className="text-sm font-black text-emerald-800">
+                                                        %{getDiscountPercent(event)} indirim uygulandı, fiyat düştü.
+                                                    </p>
+                                                    <p className="mt-1 text-xs font-semibold text-emerald-700">
+                                                        Önceki fiyat {formatCurrency(event.basePrice || event.price)}, güncel fiyat {formatCurrency(event.price)}.
+                                                    </p>
+                                                </div>
+                                            )}
+
                                             {event.tags && event.tags.length > 0 && (
                                                 <div className="flex flex-wrap gap-2">
                                                     {event.tags.map((tag: string, index: number) => (
@@ -154,8 +177,10 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
                                                     label="Başlayan fiyat"
                                                     value={formatCurrency(event.price)}
                                                     helper={
-                                                        event.basePrice && event.basePrice !== event.price
-                                                            ? `${formatCurrency(event.basePrice)} baz fiyat`
+                                                        event.basePrice && event.basePrice > event.price
+                                                            ? `${formatCurrency(event.basePrice)} yerine indirimli fiyat`
+                                                            : event.basePrice && event.basePrice !== event.price
+                                                                ? `${formatCurrency(event.basePrice)} baz fiyat`
                                                             : 'Güncel satış fiyatı'
                                                     }
                                                 />

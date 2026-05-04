@@ -4,6 +4,12 @@ export interface TicketEvent {
   date: string;
   price: number;
   basePrice?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  lastPriceUpdateAt?: string;
+  pricingReason?: string;
+  pricingTrend?: "discount" | "surge" | "stable";
+  discountPercent?: number;
   totalTickets: number;
   availableTickets: number;
   category?: string;

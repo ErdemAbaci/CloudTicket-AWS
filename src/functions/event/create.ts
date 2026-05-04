@@ -27,13 +27,18 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const eventId = randomUUID();
+    const basePrice = body.basePrice || body.price;
 
     const messageBody: TicketEvent = {
       id: eventId,
       name: body.name,
       date: body.date || new Date().toISOString(),
       price: body.price,
-      basePrice: body.basePrice || body.price,
+      basePrice,
+      minPrice: body.minPrice || Math.round(basePrice * 0.75),
+      maxPrice: body.maxPrice || Math.round(basePrice * 1.4),
+      pricingTrend: body.price < basePrice ? "discount" : body.price > basePrice ? "surge" : "stable",
+      discountPercent: body.price < basePrice ? Math.round(((basePrice - body.price) / basePrice) * 100) : 0,
       totalTickets: body.totalTickets,
       availableTickets: body.totalTickets,
       category: body.category || "Genel",
