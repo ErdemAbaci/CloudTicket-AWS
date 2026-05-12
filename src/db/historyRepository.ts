@@ -1,6 +1,6 @@
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient } from "./client";
-import { TicketEvent } from "../types";
+import { TicketEvent, TicketPurchaseHistory } from "../types";
 
 const HISTORY_TABLE = process.env.HISTORY_TABLE || "";
 
@@ -27,4 +27,42 @@ export const recordTicketPurchaseHistory = async ({
       remainingTickets: eventData.availableTickets,
     },
   }));
+};
+
+export const listPurchaseHistoryByUser = async (userId: string) => {
+  const items: TicketPurchaseHistory[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+
+  do {
+    const result = await docClient.send(new ScanCommand({
+      TableName: HISTORY_TABLE,
+      FilterExpression: "userId = :userId",
+      ExpressionAttributeValues: {
+        ":userId": userId,
+      },
+      ExclusiveStartKey,
+    }));
+
+    items.push(...((result.Items || []) as TicketPurchaseHistory[]));
+    ExclusiveStartKey = result.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+
+  return items.sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime());
+};
+
+export const listAllPurchaseHistory = async () => {
+  const items: TicketPurchaseHistory[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+
+  do {
+    const result = await docClient.send(new ScanCommand({
+      TableName: HISTORY_TABLE,
+      ExclusiveStartKey,
+    }));
+
+    items.push(...((result.Items || []) as TicketPurchaseHistory[]));
+    ExclusiveStartKey = result.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+
+  return items.sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime());
 };

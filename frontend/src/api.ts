@@ -55,6 +55,7 @@ export const getEvent = (id: string) => api.get(`/event/${id}`);
 export const createEvent = (data: { name: string; date: string; price: number; totalTickets: number; imageUrl?: string; category?: string; tags?: string[]; basePrice?: number }) => api.post('/event', data);
 export const purchaseTicket = (id: string) => api.post(`/event/${id}/purchase`);
 export const getMyTickets = () => api.get('/my-tickets');
+export const getRecommendations = (params?: { limit?: number }) => api.get('/recommendations', { params });
 
 // --- S3 UPLOAD ---
 export const getUploadUrl = async (token: string, contentType: string) => {

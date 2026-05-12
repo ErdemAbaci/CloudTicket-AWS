@@ -15,7 +15,7 @@ import {
   User,
   WalletCards,
 } from 'lucide-react';
-import { getEvents } from './api';
+import { getEvents, getRecommendations } from './api';
 import 'react-toastify/dist/ReactToastify.css';
 
 import EventDetailModal from './components/EventDetailModal';
@@ -36,6 +36,10 @@ interface EventData {
   category?: string;
   tags?: string[];
   imageUrl?: string;
+  recommendationReason?: string;
+  recommendationScore?: number;
+  recommendationSignals?: string[];
+  aiConfidence?: number;
 }
 
 const categories = ['Tümü', 'Konser', 'Festival', 'Tiyatro', 'Stand-up', 'Spor'];
@@ -109,13 +113,21 @@ function App() {
     },
     enabled: !!user,
   });
+  const { data: personalizedEvents = [], isLoading: isRecommendationsLoading } = useQuery<EventData[]>({
+    queryKey: ['recommendations'],
+    queryFn: async () => {
+      const response = await getRecommendations({ limit: 3 });
+      return response.data;
+    },
+    enabled: !!user,
+  });
 
   const filteredEvents = useMemo(() => {
     return events;
   }, [events]);
 
   const featuredEvent = filteredEvents[0] || events[0];
-  const recommendedEvents = filteredEvents.slice(0, 3);
+  const recommendedEvents = personalizedEvents.length > 0 ? personalizedEvents : filteredEvents.slice(0, 3);
 
   const handleExploreClick = () => {
     document.getElementById('events')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -190,7 +202,7 @@ function App() {
             <div className="flex flex-col justify-center">
               <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-black text-emerald-700">
                 <Sparkles className="h-4 w-4" />
-                AI destekli öneriler yakında
+                AI destekli öneriler aktif
               </div>
               <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                 Şehirdeki iyi anları kaçırma.
@@ -249,12 +261,12 @@ function App() {
                   <h2 className="mt-2 text-2xl font-black text-slate-950">Bugün öne çıkanlar</h2>
                 </div>
                 <p className="max-w-md text-sm leading-6 text-slate-500">
-                  Hafta 9 öneri sistemi geldiğinde bu alan geçmiş biletlerin ve etiketlere göre kişiselleşecek.
+                  Geçmiş biletlerin, kategori tercihlerin ve etiketlere göre seçilen yaklaşan etkinlikler.
                 </p>
               </div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {(isLoading ? [undefined, undefined, undefined] : recommendedEvents).map((event, index) => (
+                {(isRecommendationsLoading ? [undefined, undefined, undefined] : recommendedEvents).map((event, index) => (
                   <SoftRecommendation key={event?.id || index} event={event} onOpen={handleEventClick} />
                 ))}
               </div>
@@ -388,6 +400,19 @@ function SoftRecommendation({ event, onOpen }: { event?: EventData; onOpen: (id:
       </div>
       <h3 className="mt-5 line-clamp-2 text-lg font-black text-slate-950">{event.name}</h3>
       <p className="mt-2 text-sm font-semibold text-slate-500">{formatDate(event.date)}</p>
+      {event.recommendationReason && (
+        <p className="mt-3 line-clamp-2 text-xs font-bold leading-5 text-emerald-700">{event.recommendationReason}</p>
+      )}
+      {event.aiConfidence !== undefined && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
+            AI güveni %{Math.round(event.aiConfidence * 100)}
+          </span>
+          {event.recommendationSignals?.[0] && (
+            <span className="line-clamp-1 text-[11px] font-bold text-slate-500">{event.recommendationSignals[0]}</span>
+          )}
+        </div>
+      )}
       <div className="mt-4 flex items-center justify-between">
         <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600">
           {event.category || 'Genel'}

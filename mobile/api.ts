@@ -46,5 +46,6 @@ export const getEvents = (params?: { search?: string; category?: string; tags?: 
 export const getEvent = (id: string) => api.get(`/event/${id}`);
 export const purchaseTicket = (id: string) => api.post(`/event/${id}/purchase`);
 export const getMyTickets = () => api.get('/my-tickets');
+export const getRecommendations = (params?: { limit?: number }) => api.get('/recommendations', { params });
 
 export default api;

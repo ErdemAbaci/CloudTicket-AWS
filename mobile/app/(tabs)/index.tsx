@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 
-import { getEvents, purchaseTicket } from '../../api';
+import { getEvents, getRecommendations, purchaseTicket } from '../../api';
 
 interface EventData {
   id: string;
@@ -29,6 +29,10 @@ interface EventData {
   discountPercent?: number;
   pricingReason?: string;
   lastPriceUpdateAt?: string;
+  recommendationReason?: string;
+  recommendationScore?: number;
+  recommendationSignals?: string[];
+  aiConfidence?: number;
 }
 
 const categories = ['Tümü', 'Konser', 'Festival', 'Tiyatro', 'Stand-up', 'Spor'];
@@ -77,6 +81,7 @@ const getDiscountPercent = (event: EventData) => {
 
 export default function HomeScreen() {
   const [events, setEvents] = useState<EventData[]>([]);
+  const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
@@ -85,7 +90,10 @@ export default function HomeScreen() {
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
 
   const featuredEvent = events[0];
-  const recommendedEvents = useMemo(() => events.slice(0, 3), [events]);
+  const visibleRecommendedEvents = useMemo(
+    () => recommendedEvents.length > 0 ? recommendedEvents : events.slice(0, 3),
+    [events, recommendedEvents],
+  );
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -105,9 +113,22 @@ export default function HomeScreen() {
     }
   }, [searchTerm, selectedCategory]);
 
+  const fetchRecommendations = useCallback(async () => {
+    try {
+      const { data } = await getRecommendations({ limit: 3 });
+      setRecommendedEvents(data);
+    } catch {
+      setRecommendedEvents([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations]);
 
   const handlePurchase = async (event: EventData) => {
     if (event.availableTickets !== undefined && event.availableTickets <= 0) {
@@ -122,6 +143,7 @@ export default function HomeScreen() {
       Alert.alert('Bilet hazır', 'Dijital biletin Biletlerim ekranına eklendi.');
       setSelectedEvent(null);
       fetchEvents();
+      fetchRecommendations();
     } catch (purchaseError: any) {
       Alert.alert(
         'İşlem tamamlanamadı',
@@ -147,7 +169,7 @@ export default function HomeScreen() {
 
         <View style={styles.aiPill}>
           <MaterialIcons name="auto-awesome" size={16} color="#047857" />
-          <Text style={styles.aiPillText}>AI destekli öneriler yakında</Text>
+          <Text style={styles.aiPillText}>AI destekli öneriler aktif</Text>
         </View>
 
         <Text style={styles.heroTitle}>Şehirdeki iyi anları kaçırma.</Text>
@@ -213,7 +235,7 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      {recommendedEvents.length > 0 ? (
+      {visibleRecommendedEvents.length > 0 ? (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View>
@@ -225,7 +247,7 @@ export default function HomeScreen() {
 
           <FlatList
             horizontal
-            data={recommendedEvents}
+            data={visibleRecommendedEvents}
             keyExtractor={(item) => `recommended-${item.id}`}
             renderItem={({ item }) => <RecommendationCard event={item} onPress={() => setSelectedEvent(item)} />}
             showsHorizontalScrollIndicator={false}
@@ -361,6 +383,16 @@ function RecommendationCard({ event, onPress }: { event: EventData; onPress: () 
         {event.name}
       </Text>
       <Text style={styles.recommendationDate}>{formatDate(event.date)}</Text>
+      {event.recommendationReason ? (
+        <Text style={styles.recommendationReason} numberOfLines={2}>
+          {event.recommendationReason}
+        </Text>
+      ) : null}
+      {event.aiConfidence !== undefined ? (
+        <View style={styles.aiConfidencePill}>
+          <Text style={styles.aiConfidenceText}>AI güveni %{Math.round(event.aiConfidence * 100)}</Text>
+        </View>
+      ) : null}
       <View style={styles.recommendationFooter}>
         <Text style={styles.recommendationTag}>{event.category || 'Genel'}</Text>
         <View style={styles.recommendationPriceGroup}>
@@ -756,6 +788,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     marginTop: 8,
+  },
+  recommendationReason: {
+    color: '#047857',
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  aiConfidencePill: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    marginTop: 8,
+  },
+  aiConfidenceText: {
+    color: '#047857',
+    fontSize: 10,
+    fontWeight: '900',
   },
   recommendationFooter: {
     flexDirection: 'row',

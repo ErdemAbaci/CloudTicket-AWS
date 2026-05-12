@@ -1,6 +1,6 @@
 import { Fragment, useState, type ReactNode } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { Calendar, Clock, MapPin, Tag, X } from 'lucide-react';
 
@@ -33,6 +33,7 @@ const getDiscountPercent = (event: { price: number; basePrice?: number; discount
 
 export default function EventDetailModal({ isOpen, onClose, eventId }: EventDetailModalProps) {
     const [isPurchasing, setIsPurchasing] = useState(false);
+    const queryClient = useQueryClient();
     const { data: event, isLoading, isError, refetch } = useQuery({
         queryKey: ['event', eventId],
         queryFn: async () => {
@@ -50,6 +51,8 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
             await purchaseTicket(eventId);
             toast.success('Bilet başarıyla alındı!');
             refetch();
+            queryClient.invalidateQueries({ queryKey: ['events'] });
+            queryClient.invalidateQueries({ queryKey: ['recommendations'] });
         } catch {
             // Toast api.ts içinde global olarak gösteriliyor.
         } finally {

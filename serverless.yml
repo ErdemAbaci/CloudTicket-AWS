@@ -13,9 +13,12 @@ provider:
     EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
     TICKETS_TABLE: ${self:service}-tickets-table-${sls:stage}
     HISTORY_TABLE: ${self:service}-history-table-${sls:stage}
+    AI_RECOMMENDATIONS_TABLE: ${self:service}-ai-recommendations-${sls:stage}
     QUEUE_URL: { Ref: TicketQueue }
     EVENT_BUS_NAME: { Ref: EventBus }
     MEDIA_BUCKET_NAME: ${self:service}-media-${sls:stage}
+    GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
+    GEMINI_MODEL: ${env:GEMINI_MODEL, 'gemini-2.5-flash-lite'}
 
   iam:
     role:
@@ -31,6 +34,7 @@ provider:
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.EVENTS_TABLE}"
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.TICKETS_TABLE}"
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.HISTORY_TABLE}"
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.AI_RECOMMENDATIONS_TABLE}"
         - Effect: Allow
           Action:
             - sqs:SendMessage
@@ -157,6 +161,29 @@ functions:
               Fn::GetAtt:
                 - CognitoUserPool
                 - Arn
+  listRecommendations:
+    handler: src/functions/recommendation/list.handler
+    events:
+      - http:
+          path: /recommendations
+          method: get
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
+  generateAiRecommendations:
+    handler: src/functions/recommendation/generateDaily.handler
+    timeout: 30
+    events:
+      - schedule:
+          name: ${self:service}-ai-recommendations-${sls:stage}
+          description: TicketMind Gemini destekli günlük öneri analizi
+          rate: cron(30 0 * * ? *)
+          enabled: true
   recordAnalytics:
     handler: src/functions/ticket/recordAnalytics.handler
     events:

@@ -3,3 +3,5 @@ node_modules
 .env    
 QA.md
 scripts/
+/src/.env
+/src/.env.local

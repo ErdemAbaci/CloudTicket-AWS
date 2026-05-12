@@ -42,3 +42,18 @@ Resources:
         - AttributeName: purchasedAt
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+
+  AiRecommendationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:provider.environment.AI_RECOMMENDATIONS_TABLE}
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true

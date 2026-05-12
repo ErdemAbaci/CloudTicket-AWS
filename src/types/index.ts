@@ -31,3 +31,31 @@ export interface TicketPurchasedDetail {
   userId: string;
   purchasedAt: string;
 }
+
+export interface TicketPurchaseHistory {
+  eventId: string;
+  purchasedAt: string;
+  userId: string;
+  soldPrice: number;
+  basePrice: number;
+  category: string;
+  tags: string[];
+  totalCapacity: number;
+  remainingTickets: number;
+}
+
+export interface RecommendedEvent extends TicketEvent {
+  recommendationScore: number;
+  recommendationReason: string;
+  recommendationSignals?: string[];
+  aiConfidence?: number;
+  aiProvider?: "rule-based" | "gemini";
+}
+
+export interface AiRecommendationCache {
+  userId: string;
+  generatedAt: string;
+  expiresAt: number;
+  provider: "rule-based" | "gemini";
+  recommendations: RecommendedEvent[];
+}

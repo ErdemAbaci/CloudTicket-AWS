@@ -1,6 +1,7 @@
 import { ScheduledEvent } from "aws-lambda";
 import { listUpcomingEventsForPricing, updateEventPrice } from "../../db/pricingRepository";
 import { calculateDynamicPrice } from "../../services/dynamicPricing";
+import { refineRecommendationsWithGemini } from "../../services/geminiClient";
 
 export const handler = async (_event: ScheduledEvent) => {
   const now = new Date();
@@ -9,14 +10,44 @@ export const handler = async (_event: ScheduledEvent) => {
 
   const results = await Promise.all(events.map(async (ticketEvent) => {
     const decision = calculateDynamicPrice(ticketEvent, now);
-    await updateEventPrice(ticketEvent.id, decision, updatedAt);
+    let pricingReason = decision.pricingReason;
+
+    try {
+      const geminiExplanation = await refineRecommendationsWithGemini({
+        history: [],
+        candidates: [{
+          ...ticketEvent,
+          recommendationScore: 1,
+          recommendationReason: decision.pricingReason,
+          recommendationSignals: [
+            `Güncel fiyat: ${decision.price}`,
+            `Trend: ${decision.pricingTrend}`,
+            `Kalan bilet: ${ticketEvent.availableTickets}`,
+          ],
+          aiConfidence: 0.5,
+          aiProvider: "rule-based",
+        }],
+      });
+
+      if (geminiExplanation?.[0]?.recommendationReason) {
+        pricingReason = geminiExplanation[0].recommendationReason;
+      }
+    } catch {
+      // Gemini opsiyonel; fiyat kararını deterministic motor verir.
+    }
+
+    const enrichedDecision = {
+      ...decision,
+      pricingReason,
+    };
+    await updateEventPrice(ticketEvent.id, enrichedDecision, updatedAt);
 
     return {
       eventId: ticketEvent.id,
       oldPrice: ticketEvent.price,
-      newPrice: decision.price,
-      trend: decision.pricingTrend,
-      reason: decision.pricingReason,
+      newPrice: enrichedDecision.price,
+      trend: enrichedDecision.pricingTrend,
+      reason: enrichedDecision.pricingReason,
     };
   }));
 
