@@ -14,6 +14,7 @@ provider:
     TICKETS_TABLE: ${self:service}-tickets-table-${sls:stage}
     HISTORY_TABLE: ${self:service}-history-table-${sls:stage}
     AI_RECOMMENDATIONS_TABLE: ${self:service}-ai-recommendations-${sls:stage}
+    PURCHASE_RATE_LIMITS_TABLE: ${self:service}-purchase-rate-limits-${sls:stage}
     QUEUE_URL: { Ref: TicketQueue }
     EVENT_BUS_NAME: { Ref: EventBus }
     MEDIA_BUCKET_NAME: ${self:service}-media-${sls:stage}
@@ -35,6 +36,7 @@ provider:
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.TICKETS_TABLE}"
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.HISTORY_TABLE}"
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.AI_RECOMMENDATIONS_TABLE}"
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.PURCHASE_RATE_LIMITS_TABLE}"
         - Effect: Allow
           Action:
             - sqs:SendMessage

@@ -57,3 +57,18 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: true
+
+  PurchaseRateLimitsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:provider.environment.PURCHASE_RATE_LIMITS_TABLE}
+      AttributeDefinitions:
+        - AttributeName: limiterKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: limiterKey
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true

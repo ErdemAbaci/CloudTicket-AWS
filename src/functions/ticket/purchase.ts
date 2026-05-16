@@ -3,6 +3,7 @@ import { formatResponse } from "../../utils/response";
 import { decrementAvailableTickets } from "../../db/eventRepository";
 import { publishTicketPurchased } from "../../services/eventService";
 import { getUserIdFromEvent } from "../../utils/auth";
+import { guardPurchaseAttempt } from "../../services/purchaseGuardService";
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -11,6 +12,23 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const userId = getUserIdFromEvent(event);
     if (!userId) return formatResponse(401, { error: "Kimlik doğrulanamadı" });
+    const guardResult = await guardPurchaseAttempt({ event, userId });
+
+    if (!guardResult.allowed) {
+      const response = formatResponse(429, {
+        error: "Çok sık bilet alma denemesi algılandı. Lütfen kısa bir süre sonra tekrar dene.",
+        scope: guardResult.scope,
+        retryAfterSeconds: guardResult.retryAfterSeconds,
+      });
+
+      return {
+        ...response,
+        headers: {
+          ...response.headers,
+          "Retry-After": String(guardResult.retryAfterSeconds),
+        },
+      };
+    }
 
     // Atomic kilit mekanizması
     try {

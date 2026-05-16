@@ -59,3 +59,11 @@ export interface AiRecommendationCache {
   provider: "rule-based" | "gemini";
   recommendations: RecommendedEvent[];
 }
+
+export interface PurchaseRateLimitRecord {
+  limiterKey: string;
+  attempts: number;
+  windowStartedAt: number;
+  expiresAt: number;
+  updatedAt: string;
+}
