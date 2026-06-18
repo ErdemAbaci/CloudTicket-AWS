@@ -56,11 +56,11 @@ export const createEvent = (data: { name: string; date: string; price: number; t
 export const purchaseTicket = (id: string) => api.post(`/event/${id}/purchase`);
 export const getMyTickets = () => api.get('/my-tickets');
 export const getRecommendations = (params?: { limit?: number }) => api.get('/recommendations', { params });
+export const getAnalyticsOverview = () => api.get('/analytics/overview');
 
 // --- S3 UPLOAD ---
-export const getUploadUrl = async (token: string, contentType: string) => {
+export const getUploadUrl = async (contentType: string) => {
     const response = await api.get('/upload-url', {
-        headers: { Authorization: `Bearer ${token}` },
         params: { contentType },
     });
     return response.data; // { uploadUrl, key }

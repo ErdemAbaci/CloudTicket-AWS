@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { formatResponse } from "../../utils/response";
-import { decrementAvailableTickets } from "../../db/eventRepository";
+import { decrementAvailableTickets, getEventById } from "../../db/eventRepository";
 import { publishTicketPurchased } from "../../services/eventService";
 import { getUserIdFromEvent } from "../../utils/auth";
 import { guardPurchaseAttempt } from "../../services/purchaseGuardService";
@@ -40,8 +40,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw dbError; // Diğer hatalar için dış catch bloğuna fırlat
     }
 
-    // Bilet garantilendi! EventBridge'ye satın alım olayını fırlat (Asenkron - beklememize gerek yok)
-    await publishTicketPurchased(id, userId);
+    // Bilet garantilendi! Anlık fiyatı kaydet ve EventBridge'ye fırlat
+    const eventData = await getEventById(id);
+    const soldPrice = eventData?.price ?? 0;
+    await publishTicketPurchased(id, userId, soldPrice);
 
     return formatResponse(200, {
       message: "Bilet başarıyla satın alındı/rezerve edildi!",

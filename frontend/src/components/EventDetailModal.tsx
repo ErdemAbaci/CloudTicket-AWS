@@ -53,6 +53,7 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
             refetch();
             queryClient.invalidateQueries({ queryKey: ['events'] });
             queryClient.invalidateQueries({ queryKey: ['recommendations'] });
+            queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
         } catch {
             // Toast api.ts içinde global olarak gösteriliyor.
         } finally {

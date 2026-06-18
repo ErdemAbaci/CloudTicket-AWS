@@ -8,10 +8,12 @@ export const recordTicketPurchaseHistory = async ({
   eventData,
   userId,
   purchasedAt,
+  soldPrice,
 }: {
   eventData: TicketEvent;
   userId: string;
   purchasedAt: string;
+  soldPrice: number;
 }) => {
   await docClient.send(new PutCommand({
     TableName: HISTORY_TABLE,
@@ -19,7 +21,7 @@ export const recordTicketPurchaseHistory = async ({
       eventId: eventData.id,
       purchasedAt,
       userId,
-      soldPrice: eventData.price,
+      soldPrice,
       basePrice: eventData.basePrice || eventData.price,
       category: eventData.category || "Genel",
       tags: eventData.tags || [],

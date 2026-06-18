@@ -51,13 +51,6 @@ export const handler = async (_event: ScheduledEvent) => {
     };
   }));
 
-  console.log("Dynamic pricing completed", {
-    checkedEvents: events.length,
-    updatedEvents: results.length,
-    updatedAt,
-    results,
-  });
-
   return {
     checkedEvents: events.length,
     updatedEvents: results.length,

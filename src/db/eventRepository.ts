@@ -105,7 +105,7 @@ export const decrementAvailableTickets = async (id: string) => {
     TableName: TABLE_NAME,
     Key: { id },
     UpdateExpression: "SET availableTickets = availableTickets - :dec",
-    ConditionExpression: "availableTickets >= :dec", // Stok 1 veya fazlaysa düş
+    ConditionExpression: "attribute_exists(availableTickets) AND availableTickets >= :dec", // Stok 1 veya fazlaysa düş
     ExpressionAttributeValues: {
       ":dec": 1
     }

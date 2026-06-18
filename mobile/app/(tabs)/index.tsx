@@ -4,6 +4,8 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
+  ImageBackground,
   Modal,
   Pressable,
   ScrollView,
@@ -12,6 +14,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
+const fallbackImage = require('../../assets/images/fallback-event.png');
 
 import { getEvents, getRecommendations, purchaseTicket } from '../../api';
 
@@ -210,7 +214,8 @@ export default function HomeScreen() {
       />
 
       {featuredEvent ? (
-        <View style={styles.featuredCard}>
+        <ImageBackground source={fallbackImage} style={styles.featuredCard} imageStyle={styles.featuredCardImage}>
+          <View style={styles.featuredOverlay} />
           <View style={styles.featuredTopRow}>
             <Text style={styles.featuredTag}>{featuredEvent.category || 'Öne çıkan'}</Text>
             <Text style={styles.featuredStatus}>{getRemainingLabel(featuredEvent)}</Text>
@@ -232,7 +237,7 @@ export default function HomeScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </ImageBackground>
       ) : null}
 
       {visibleRecommendedEvents.length > 0 ? (
@@ -270,12 +275,13 @@ export default function HomeScreen() {
 
     return (
       <View style={styles.eventCard}>
-        <View style={styles.dateTile}>
+        <ImageBackground source={fallbackImage} style={styles.dateTile} imageStyle={styles.dateTileImage}>
+          <View style={styles.dateTileOverlay} />
           <Text style={styles.dateMonth}>
             {new Date(item.date).toLocaleDateString('tr-TR', { month: 'short' })}
           </Text>
           <Text style={styles.dateDay}>{new Date(item.date).toLocaleDateString('tr-TR', { day: 'numeric' })}</Text>
-        </View>
+        </ImageBackground>
 
         <View style={styles.eventBody}>
           <View style={styles.eventTopRow}>
@@ -429,10 +435,10 @@ function EventDetailSheet({
       <View style={styles.modalBackdrop}>
         <View style={styles.detailSheet}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.detailScrollContent}>
-            <View style={styles.detailHero}>
+            <ImageBackground source={fallbackImage} style={styles.detailHero} imageStyle={styles.detailHeroImage}>
               <View style={styles.detailHeroOverlay} />
               <Pressable style={styles.detailCloseButton} onPress={onClose} accessibilityRole="button" accessibilityLabel="Kapat">
-                <MaterialIcons name="close" size={22} color="#475569" />
+                <MaterialIcons name="close" size={22} color="#FFFFFF" />
               </Pressable>
 
               <View style={styles.detailHeroContent}>
@@ -442,7 +448,7 @@ function EventDetailSheet({
                 </View>
                 <Text style={styles.detailTitle}>{event.name}</Text>
               </View>
-            </View>
+            </ImageBackground>
 
             <View style={styles.detailInfoGrid}>
               <DetailInfo icon="event" label="Tarih" value={formatLongDate(event.date)} />
@@ -650,6 +656,16 @@ const styles = StyleSheet.create({
     padding: 22,
     overflow: 'hidden',
   },
+  featuredCardImage: {
+    borderRadius: 34,
+    opacity: 0.45,
+  },
+  featuredOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0F172A',
+    opacity: 0.4,
+    borderRadius: 34,
+  },
   featuredTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -855,15 +871,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  dateTileImage: {
+    borderRadius: 22,
+    opacity: 0.35,
+  },
+  dateTileOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0F172A',
+    opacity: 0.3,
   },
   dateMonth: {
-    color: '#64748B',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '900',
     textTransform: 'uppercase',
   },
   dateDay: {
-    color: '#0F172A',
+    color: '#FFFFFF',
     fontSize: 30,
     fontWeight: '900',
     marginTop: 4,
@@ -989,10 +1015,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
     overflow: 'hidden',
   },
+  detailHeroImage: {
+    borderRadius: 28,
+    opacity: 0.5,
+  },
   detailHeroOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#0F172A',
-    opacity: 0.96,
+    opacity: 0.5,
   },
   detailCloseButton: {
     position: 'absolute',

@@ -16,8 +16,8 @@ api.interceptors.request.use(
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
-        } catch (error) {
-            console.log('No valid session found for API call');
+        } catch {
+            // Public endpoints can still proceed without an active session.
         }
         return config;
     },

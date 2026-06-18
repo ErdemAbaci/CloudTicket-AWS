@@ -1,8 +1,16 @@
 Resources:
+  TicketQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ${self:service}-queue-dlq-${sls:stage}
+
   TicketQueue:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: ${self:service}-queue-${sls:stage}
+      RedrivePolicy:
+        deadLetterTargetArn: { Fn::GetAtt: [TicketQueueDLQ, Arn] }
+        maxReceiveCount: 3
 
   TicketQueuePolicy:
     Type: AWS::SQS::QueuePolicy

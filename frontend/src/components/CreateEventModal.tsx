@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createEvent, getUploadUrl, uploadFileToS3 } from '../api';
 import { toast } from 'react-toastify';
 import { X, Calendar, DollarSign, Type, Upload } from 'lucide-react';
-import { fetchAuthSession } from 'aws-amplify/auth';
 
 interface CreateEventModalProps {
     isOpen: boolean;
@@ -27,21 +26,12 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
         setIsSubmitting(true);
 
         try {
-            // 1. Token al
-            const session = await fetchAuthSession();
-            const token = session.tokens?.idToken?.toString();
-
-            if (!token) {
-                toast.error('Oturum bilgisi alınamadı.');
-                return;
-            }
-
             let imageKey = undefined;
 
-            // 2. Dosya varsa yükle
+            // Dosya varsa yükle
             if (file) {
-                // A. Presigned URL al
-                const { uploadUrl, key } = await getUploadUrl(token, file.type);
+                // A. Presigned URL al (auth interceptor token'ı ekler)
+                const { uploadUrl, key } = await getUploadUrl(file.type);
 
                 // B. Dosyayı S3'e yükle
                 await uploadFileToS3(uploadUrl, file);
@@ -50,9 +40,12 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
             }
 
             // 3. Etkinliği oluştur (resim key'i ile ve AI metadata ile)
+            // date input "YYYY-MM-DD" üretir; UTC midnight olarak parse edilirse TR timezone'da 1 gün geriye kayar.
+            // T12:00:00Z kullanarak tüm timezone'larda tarihin aynı gün kalmasını sağlıyoruz.
+            const normalizedDate = formData.date ? `${formData.date}T12:00:00.000Z` : formData.date;
             await createEvent({
                 name: formData.name,
-                date: formData.date,
+                date: normalizedDate,
                 price: Number(formData.price),
                 basePrice: formData.basePrice ? Number(formData.basePrice) : Number(formData.price),
                 category: formData.category,

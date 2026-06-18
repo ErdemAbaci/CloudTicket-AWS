@@ -30,6 +30,7 @@ export interface TicketPurchasedDetail {
   eventId: string;
   userId: string;
   purchasedAt: string;
+  soldPrice: number;
 }
 
 export interface TicketPurchaseHistory {
@@ -66,4 +67,33 @@ export interface PurchaseRateLimitRecord {
   windowStartedAt: number;
   expiresAt: number;
   updatedAt: string;
+}
+
+export interface AnalyticsDailyPoint {
+  date: string;
+  revenue: number;
+  soldTickets: number;
+}
+
+export interface AnalyticsTopCategory {
+  category: string;
+  soldTickets: number;
+  revenue: number;
+}
+
+export interface AnalyticsTopEvent {
+  eventId: string;
+  soldTickets: number;
+  revenue: number;
+}
+
+export interface AnalyticsOverview {
+  totalRevenue: number;
+  soldTickets: number;
+  averageTicketPrice: number;
+  uniqueEventsSold: number;
+  topCategory?: AnalyticsTopCategory;
+  topCategories: AnalyticsTopCategory[];
+  topEvents: AnalyticsTopEvent[];
+  daily: AnalyticsDailyPoint[];
 }

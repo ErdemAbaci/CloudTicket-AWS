@@ -18,13 +18,13 @@ export const publishTicketEvent = async (messageBody: TicketEvent) => {
   }));
 };
 
-export const publishTicketPurchased = async (eventId: string, userId: string) => {
+export const publishTicketPurchased = async (eventId: string, userId: string, soldPrice: number) => {
   await eventBridgeClient.send(new PutEventsCommand({
     Entries: [
       {
         Source: EVENT_SOURCE,
         DetailType: EVENT_DETAIL_TYPES.ticketPurchased,
-        Detail: JSON.stringify({ eventId, userId, purchasedAt: new Date().toISOString() }),
+        Detail: JSON.stringify({ eventId, userId, purchasedAt: new Date().toISOString(), soldPrice }),
         EventBusName: EVENT_BUS_NAME,
       },
     ],

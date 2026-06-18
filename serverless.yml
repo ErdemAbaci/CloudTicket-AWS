@@ -177,6 +177,20 @@ functions:
               Fn::GetAtt:
                 - CognitoUserPool
                 - Arn
+  analyticsOverview:
+    handler: src/functions/analytics/overview.handler
+    events:
+      - http:
+          path: /analytics/overview
+          method: get
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
   generateAiRecommendations:
     handler: src/functions/recommendation/generateDaily.handler
     timeout: 30

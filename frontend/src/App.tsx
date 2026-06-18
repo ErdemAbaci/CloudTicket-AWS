@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import { useQuery } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
@@ -20,6 +20,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import EventDetailModal from './components/EventDetailModal';
 import MyTicketsModal from './components/MyTicketsModal';
+import CreateEventModal from './components/CreateEventModal';
+import OrganizerAnalyticsModal from './components/OrganizerAnalyticsModal';
 
 interface EventData {
   id: string;
@@ -97,6 +99,8 @@ function App() {
   const { user, signOut } = useAuthenticator((context) => [context.user]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isMyTicketsModalOpen, setIsMyTicketsModalOpen] = useState(false);
+  const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false);
+  const [isOrganizerAnalyticsOpen, setIsOrganizerAnalyticsOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [searchTerm, setSearchTerm] = useState('');
@@ -122,10 +126,7 @@ function App() {
     enabled: !!user,
   });
 
-  const filteredEvents = useMemo(() => {
-    return events;
-  }, [events]);
-
+  const filteredEvents = events;
   const featuredEvent = filteredEvents[0] || events[0];
   const recommendedEvents = personalizedEvents.length > 0 ? personalizedEvents : filteredEvents.slice(0, 3);
 
@@ -149,6 +150,15 @@ function App() {
           eventId={selectedEventId}
         />
         <MyTicketsModal isOpen={isMyTicketsModalOpen} onClose={() => setIsMyTicketsModalOpen(false)} />
+        <CreateEventModal isOpen={isCreateEventModalOpen} onClose={() => setIsCreateEventModalOpen(false)} />
+        <OrganizerAnalyticsModal
+          isOpen={isOrganizerAnalyticsOpen}
+          onClose={() => setIsOrganizerAnalyticsOpen(false)}
+          onCreateEvent={() => {
+            setIsOrganizerAnalyticsOpen(false);
+            setIsCreateEventModalOpen(true);
+          }}
+        />
 
         <header className="sticky top-0 z-30 border-b border-white/70 bg-[#F7F4EF]/90 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -175,9 +185,22 @@ function App() {
               <a href="#recommended" className="transition-colors hover:text-slate-950">
                 Sana Özel
               </a>
+              <button
+                onClick={() => setIsOrganizerAnalyticsOpen(true)}
+                className="transition-colors hover:text-slate-950"
+              >
+                Analitik
+              </button>
             </nav>
 
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsOrganizerAnalyticsOpen(true)}
+                className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-black text-slate-800 shadow-sm transition-all hover:bg-white lg:inline-flex"
+              >
+                <Sparkles className="h-4 w-4" />
+                Organizatör
+              </button>
               <button
                 onClick={() => setIsMyTicketsModalOpen(true)}
                 aria-label="Biletlerim"
@@ -342,15 +365,12 @@ function FeaturedEvent({
       onClick={() => onOpen(event.id)}
       className="group relative min-h-[460px] overflow-hidden rounded-[36px] border border-white bg-slate-950 text-left shadow-[0_32px_90px_rgba(15,23,42,0.18)]"
     >
-      {event.imageUrl ? (
-        <img
-          src={`${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}`}
-          alt={event.name}
-          className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,#93c5fd_0,#1e3a8a_28%,#0f172a_70%)]" />
-      )}
+      <img
+        src={event.imageUrl ? `${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}` : '/fallback-event.png'}
+        alt={event.name}
+        onError={(e) => { (e.target as HTMLImageElement).src = '/fallback-event.png'; }}
+        className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
 
       <div className="relative flex h-full min-h-[460px] flex-col justify-between p-7 text-white">
@@ -408,9 +428,7 @@ function SoftRecommendation({ event, onOpen }: { event?: EventData; onOpen: (id:
           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
             AI güveni %{Math.round(event.aiConfidence * 100)}
           </span>
-          {event.recommendationSignals?.[0] && (
-            <span className="line-clamp-1 text-[11px] font-bold text-slate-500">{event.recommendationSignals[0]}</span>
-          )}
+
         </div>
       )}
       <div className="mt-4 flex items-center justify-between">
@@ -432,17 +450,12 @@ function EventCard({ event, onOpen }: { event: EventData; onOpen: (id: string) =
       className="group overflow-hidden rounded-[28px] border border-white bg-white/85 text-left shadow-sm transition-all hover:-translate-y-1 hover:bg-white hover:shadow-2xl hover:shadow-slate-200/80"
     >
       <div className="relative h-48 overflow-hidden bg-slate-200">
-        {event.imageUrl ? (
-          <img
-            src={`${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}`}
-            alt={event.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 via-emerald-50 to-amber-100">
-            <Ticket className="h-12 w-12 text-slate-400" />
-          </div>
-        )}
+        <img
+          src={event.imageUrl ? `${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}` : '/fallback-event.png'}
+          alt={event.name}
+          onError={(e) => { (e.target as HTMLImageElement).src = '/fallback-event.png'; }}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
         {discountPercent > 0 && (
           <div className="absolute right-4 top-4 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-black text-white shadow-sm">
             %{discountPercent} indirim

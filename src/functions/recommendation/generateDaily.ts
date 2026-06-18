@@ -66,12 +66,6 @@ export const handler = async (_event: ScheduledEvent) => {
     });
   }
 
-  console.log("Daily AI recommendations generated", {
-    users: results.length,
-    generatedAt,
-    results,
-  });
-
   return {
     users: results.length,
     generatedAt,

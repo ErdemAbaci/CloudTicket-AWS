@@ -5,7 +5,7 @@ import { recordTicketPurchaseHistory } from "../../db/historyRepository";
 
 export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketPurchasedDetail>) => {
   try {
-    const { eventId, userId, purchasedAt } = event.detail;
+    const { eventId, userId, purchasedAt, soldPrice } = event.detail;
 
     const eventData = await getEventById(eventId);
     if (!eventData) {
@@ -13,9 +13,8 @@ export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketP
       return;
     }
 
-    await recordTicketPurchaseHistory({ eventData, userId, purchasedAt });
+    await recordTicketPurchaseHistory({ eventData, userId, purchasedAt, soldPrice });
 
-    console.log(`Analitik kaydedildi -> Etkinlik: ${eventId}, Fiyat: ${eventData.price}`);
   } catch (error) {
     console.error("Analitik kaydetme hatası:", error);
     // Analitik hataları uygulamanın akışını bozmamalı, sadece logluyoruz.

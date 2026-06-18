@@ -33,7 +33,8 @@ export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketP
     }));
 
     // Public URL formatı
-    const qrUrl = `https://${MEDIA_BUCKET_NAME}.s3.eu-central-1.amazonaws.com/${objectKey}`;
+    const region = process.env.AWS_REGION || "eu-central-1";
+    const qrUrl = `https://${MEDIA_BUCKET_NAME}.s3.${region}.amazonaws.com/${objectKey}`;
 
     await createTicketRecord({
       userId,
@@ -45,8 +46,6 @@ export const handler = async (event: EventBridgeEvent<"TicketPurchased", TicketP
       qrUrl,
       status: "ACTIVE",
     });
-
-    console.log(`Bilet ${ticketId} oluşturuldu. S3 Yüklemesi başarılı! Kullanıcı: ${userId}`);
 
   } catch (error) {
     console.error("QR oluşturma hatası:", error);
