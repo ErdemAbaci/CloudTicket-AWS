@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { formatResponse } from "../../utils/response";
-import { decrementAvailableTickets, getEventById } from "../../db/eventRepository";
+import { decrementAvailableTickets, getEventById, isUpcomingEvent } from "../../db/eventRepository";
 import { publishTicketPurchased } from "../../services/eventService";
 import { getUserIdFromEvent } from "../../utils/auth";
 import { guardPurchaseAttempt } from "../../services/purchaseGuardService";
@@ -12,6 +12,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const userId = getUserIdFromEvent(event);
     if (!userId) return formatResponse(401, { error: "Kimlik doğrulanamadı" });
+
+    const eventData = await getEventById(id);
+    if (!eventData) {
+      return formatResponse(404, { error: "Etkinlik bulunamadı" });
+    }
+
+    if (!isUpcomingEvent(eventData)) {
+      return formatResponse(400, { error: "Bu etkinliğin tarihi geçtiği için bilet satışı kapalı." });
+    }
+
     const guardResult = await guardPurchaseAttempt({ event, userId });
 
     if (!guardResult.allowed) {
@@ -41,9 +51,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // Bilet garantilendi! Anlık fiyatı kaydet ve EventBridge'ye fırlat
-    const eventData = await getEventById(id);
-    const soldPrice = eventData?.price ?? 0;
-    await publishTicketPurchased(id, userId, soldPrice);
+    await publishTicketPurchased(id, userId, eventData.price);
 
     return formatResponse(200, {
       message: "Bilet başarıyla satın alındı/rezerve edildi!",

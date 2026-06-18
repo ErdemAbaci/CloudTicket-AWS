@@ -1,5 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -48,10 +48,19 @@ const getStatusMeta = (status: string) => {
   return { label: 'Aktif', color: '#047857', bg: '#DCFCE7' };
 };
 
+const isPastTicket = (ticket: MyTicket) => {
+  const eventTime = new Date(ticket.eventDate).getTime();
+  return Number.isFinite(eventTime) && eventTime < Date.now();
+};
+
 export default function TicketsScreen() {
   const [tickets, setTickets] = useState<MyTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
+  const activeTickets = useMemo(() => tickets.filter((ticket) => !isPastTicket(ticket)), [tickets]);
+  const pastTickets = useMemo(() => tickets.filter(isPastTicket), [tickets]);
+  const visibleTickets = activeTab === 'active' ? activeTickets : pastTickets;
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -72,7 +81,9 @@ export default function TicketsScreen() {
   }, []);
 
   const renderItem = ({ item }: { item: MyTicket }) => {
-    const status = getStatusMeta(item.status);
+    const status = isPastTicket(item)
+      ? { label: 'Gecmis', color: '#475569', bg: '#F1F5F9' }
+      : getStatusMeta(item.status);
 
     return (
       <View style={styles.passCard}>
@@ -143,7 +154,7 @@ export default function TicketsScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={tickets}
+        data={visibleTickets}
         keyExtractor={(item) => item.ticketId}
         renderItem={renderItem}
         ListHeaderComponent={
@@ -151,6 +162,24 @@ export default function TicketsScreen() {
             <Text style={styles.eyebrow}>Dijital cuzdan</Text>
             <Text style={styles.title}>Biletlerim</Text>
             <Text style={styles.subtitle}>QR kodlar, durum bilgisi ve satin alma kayitlari.</Text>
+            {tickets.length > 0 ? (
+              <View style={styles.segmentedControl}>
+                <Pressable
+                  style={[styles.segmentButton, activeTab === 'active' ? styles.activeSegmentButton : undefined]}
+                  onPress={() => setActiveTab('active')}>
+                  <Text style={[styles.segmentText, activeTab === 'active' ? styles.activeSegmentText : undefined]}>
+                    Aktif ({activeTickets.length})
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.segmentButton, activeTab === 'past' ? styles.activeSegmentButton : undefined]}
+                  onPress={() => setActiveTab('past')}>
+                  <Text style={[styles.segmentText, activeTab === 'past' ? styles.activeSegmentText : undefined]}>
+                    Gecmis ({pastTickets.length})
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
@@ -158,9 +187,11 @@ export default function TicketsScreen() {
             <View style={styles.emptyIcon}>
               <MaterialIcons name="confirmation-number" size={28} color="#0F172A" />
             </View>
-            <Text style={styles.emptyTitle}>Aktif biletin yok</Text>
+            <Text style={styles.emptyTitle}>{activeTab === 'active' ? 'Aktif biletin yok' : 'Gecmis biletin yok'}</Text>
             <Text style={styles.emptySubtitle}>
-              Bilet aldiginda QR kodun ve giris bilgilerin burada gorunecek.
+              {activeTab === 'active'
+                ? 'Bilet aldiginda QR kodun ve giris bilgilerin burada gorunecek.'
+                : 'Tarihi gecen etkinlik biletlerin burada arsivlenecek.'}
             </Text>
           </View>
         }
@@ -214,6 +245,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     marginTop: 8,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.82)',
+    borderRadius: 999,
+    padding: 4,
+    marginTop: 18,
+  },
+  segmentButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeSegmentButton: {
+    backgroundColor: '#0F172A',
+  },
+  segmentText: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  activeSegmentText: {
+    color: '#FFFFFF',
   },
   passCard: {
     backgroundColor: 'rgba(255,255,255,0.86)',

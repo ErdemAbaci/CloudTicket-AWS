@@ -3,6 +3,7 @@
     "test:backend": "tsc --outDir /tmp/ticketmind-backend-tests --module commonjs --skipLibCheck && node --test /tmp/ticketmind-backend-tests/tests/*.test.js",
     "test:pricing": "npm run test:backend",
     "seed:demo": "node scripts/seedDemoShowcase.mjs",
+    "seed:july": "node scripts/seedJuly2026Events.mjs",
     "load:test": "node scripts/loadTestPurchases.mjs",
     "verify:dlq": "node scripts/verifyDlqFlow.mjs"
   },

@@ -83,6 +83,12 @@ const getDiscountPercent = (event: EventData) => {
   return 0;
 };
 
+const isPastEvent = (eventDate?: string) => {
+  if (!eventDate) return false;
+  const eventTime = new Date(eventDate).getTime();
+  return Number.isFinite(eventTime) && eventTime < Date.now();
+};
+
 export default function HomeScreen() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
@@ -135,6 +141,11 @@ export default function HomeScreen() {
   }, [fetchRecommendations]);
 
   const handlePurchase = async (event: EventData) => {
+    if (isPastEvent(event.date)) {
+      Alert.alert('Satış kapalı', 'Bu etkinliğin tarihi geçtiği için bilet satışı kapalı.');
+      return;
+    }
+
     if (event.availableTickets !== undefined && event.availableTickets <= 0) {
       Alert.alert('Tükendi', 'Bu etkinlik için bilet kalmadı.');
       return;
@@ -428,6 +439,7 @@ function EventDetailSheet({
   }
 
   const isSoldOut = event.availableTickets !== undefined && event.availableTickets <= 0;
+  const saleClosed = isPastEvent(event.date);
   const isPurchasing = purchasing === event.id;
 
   return (
@@ -469,6 +481,13 @@ function EventDetailSheet({
               </View>
             ) : null}
 
+            {saleClosed ? (
+              <View style={styles.detailClosedBox}>
+                <Text style={styles.detailClosedTitle}>Satış kapalı</Text>
+                <Text style={styles.detailClosedText}>Bu etkinliğin tarihi geçtiği için yeni bilet alınamaz.</Text>
+              </View>
+            ) : null}
+
             {event.tags && event.tags.length > 0 ? (
               <View style={styles.detailTags}>
                 {event.tags.map((tag) => (
@@ -491,12 +510,12 @@ function EventDetailSheet({
             </Pressable>
             <Pressable
               style={[styles.primaryAction, isSoldOut ? styles.disabledButton : undefined]}
-              disabled={isSoldOut || isPurchasing}
+              disabled={saleClosed || isSoldOut || isPurchasing}
               onPress={() => onPurchase(event)}>
               {isPurchasing ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.primaryActionText}>{isSoldOut ? 'Tükendi' : 'Satın Al'}</Text>
+                <Text style={styles.primaryActionText}>{saleClosed ? 'Satış Kapalı' : isSoldOut ? 'Tükendi' : 'Satın Al'}</Text>
               )}
             </Pressable>
           </View>
@@ -1127,6 +1146,24 @@ const styles = StyleSheet.create({
   },
   detailDiscountText: {
     color: '#047857',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    marginTop: 5,
+  },
+  detailClosedBox: {
+    borderRadius: 24,
+    backgroundColor: '#F1F5F9',
+    padding: 16,
+    marginTop: 12,
+  },
+  detailClosedTitle: {
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  detailClosedText: {
+    color: '#64748B',
     fontSize: 12,
     lineHeight: 18,
     fontWeight: '700',

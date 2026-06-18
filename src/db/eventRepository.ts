@@ -6,6 +6,11 @@ const TABLE_NAME = process.env.EVENTS_TABLE || "";
 const DEFAULT_SEARCH_LIMIT = 60;
 const MAX_SEARCH_LIMIT = 100;
 
+export const isUpcomingEvent = (event: Pick<TicketEvent, "date">, now = new Date()) => {
+  const eventTime = new Date(event.date).getTime();
+  return Number.isFinite(eventTime) && eventTime >= now.getTime();
+};
+
 const normalizeText = (value: string) =>
   value
     .toLocaleLowerCase("tr-TR")
@@ -91,6 +96,7 @@ export const searchEvents = async (params: EventSearchParams) => {
   const events = await listAllEvents();
 
   return events
+    .filter((event) => isUpcomingEvent(event))
     .filter((event) => eventMatchesSearch(event, params))
     .slice(0, limit);
 };

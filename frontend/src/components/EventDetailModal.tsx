@@ -31,6 +31,12 @@ const getDiscountPercent = (event: { price: number; basePrice?: number; discount
     return 0;
 };
 
+const isPastEvent = (eventDate?: string) => {
+    if (!eventDate) return false;
+    const eventTime = new Date(eventDate).getTime();
+    return Number.isFinite(eventTime) && eventTime < Date.now();
+};
+
 export default function EventDetailModal({ isOpen, onClose, eventId }: EventDetailModalProps) {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const queryClient = useQueryClient();
@@ -43,9 +49,10 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
         },
         enabled: !!eventId && isOpen,
     });
+    const saleClosed = event ? isPastEvent(event.date) : false;
 
     const handlePurchase = async () => {
-        if (!eventId) return;
+        if (!eventId || saleClosed) return;
         setIsPurchasing(true);
         try {
             await purchaseTicket(eventId);
@@ -147,6 +154,14 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
                                                 </div>
                                             )}
 
+                                            {saleClosed && (
+                                                <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+                                                    <p className="text-sm font-black text-slate-700">
+                                                        Bu etkinliğin tarihi geçti, bilet satışı kapalı.
+                                                    </p>
+                                                </div>
+                                            )}
+
                                             {event.tags && event.tags.length > 0 && (
                                                 <div className="flex flex-wrap gap-2">
                                                     {event.tags.map((tag: string, index: number) => (
@@ -210,11 +225,13 @@ export default function EventDetailModal({ isOpen, onClose, eventId }: EventDeta
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    disabled={isPurchasing || (event.availableTickets !== undefined && event.availableTickets <= 0)}
+                                                    disabled={saleClosed || isPurchasing || (event.availableTickets !== undefined && event.availableTickets <= 0)}
                                                     className="inline-flex justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                                                     onClick={handlePurchase}
                                                 >
-                                                    {isPurchasing
+                                                    {saleClosed
+                                                        ? 'Satış Kapalı'
+                                                        : isPurchasing
                                                         ? 'İşleniyor...'
                                                         : event.availableTickets !== undefined && event.availableTickets <= 0
                                                             ? 'Tükendi'

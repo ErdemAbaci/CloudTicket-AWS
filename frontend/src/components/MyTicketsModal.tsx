@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useQuery } from '@tanstack/react-query';
 import { Calendar, QrCode, Ticket, X } from 'lucide-react';
@@ -29,7 +29,13 @@ const getStatusLabel = (status: string) => {
     return 'Aktif';
 };
 
+const isPastTicket = (ticket: MyTicket) => {
+    const eventTime = new Date(ticket.eventDate).getTime();
+    return Number.isFinite(eventTime) && eventTime < Date.now();
+};
+
 export default function MyTicketsModal({ isOpen, onClose }: MyTicketsModalProps) {
+    const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
     const { data: tickets, isLoading, isError } = useQuery({
         queryKey: ['my-tickets'],
         queryFn: async () => {
@@ -38,6 +44,15 @@ export default function MyTicketsModal({ isOpen, onClose }: MyTicketsModalProps)
         },
         enabled: isOpen,
     });
+    const { activeTickets, pastTickets } = useMemo(() => {
+        const list = (tickets || []) as MyTicket[];
+
+        return {
+            activeTickets: list.filter((ticket) => !isPastTicket(ticket)),
+            pastTickets: list.filter(isPastTicket),
+        };
+    }, [tickets]);
+    const visibleTickets = activeTab === 'active' ? activeTickets : pastTickets;
 
     return (
         <Transition appear show={isOpen} as={Fragment}>
@@ -103,8 +118,36 @@ export default function MyTicketsModal({ isOpen, onClose }: MyTicketsModalProps)
                                         <p className="mt-1 text-sm text-slate-500">Bir etkinlik seçip bilet aldığınızda QR kodunuz burada görünecek.</p>
                                     </div>
                                 ) : (
+                                    <>
+                                        <div className="mb-5 flex rounded-full bg-white/75 p-1 shadow-sm">
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('active')}
+                                                className={`flex-1 rounded-full px-4 py-2 text-sm font-black transition-colors ${activeTab === 'active' ? 'bg-slate-950 text-white' : 'text-slate-500 hover:text-slate-950'}`}
+                                            >
+                                                Aktif Biletler ({activeTickets.length})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('past')}
+                                                className={`flex-1 rounded-full px-4 py-2 text-sm font-black transition-colors ${activeTab === 'past' ? 'bg-slate-950 text-white' : 'text-slate-500 hover:text-slate-950'}`}
+                                            >
+                                                Geçmiş Biletler ({pastTickets.length})
+                                            </button>
+                                        </div>
+
+                                        {visibleTickets.length === 0 ? (
+                                            <div className="rounded-[28px] border border-white bg-white/85 px-6 py-14 text-center shadow-sm">
+                                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+                                                    <Ticket className="h-7 w-7 text-slate-300" />
+                                                </div>
+                                                <p className="mt-4 text-lg font-black text-slate-950">
+                                                    {activeTab === 'active' ? 'Aktif bilet bulunmuyor.' : 'Geçmiş bilet bulunmuyor.'}
+                                                </p>
+                                            </div>
+                                        ) : (
                                     <div className="grid max-h-[66vh] grid-cols-1 gap-5 overflow-y-auto pr-1 md:grid-cols-2 lg:grid-cols-3">
-                                        {tickets?.map((ticket: MyTicket) => (
+                                        {visibleTickets.map((ticket: MyTicket) => (
                                             <div
                                                 key={ticket.ticketId}
                                                 className="overflow-hidden rounded-[28px] border border-white bg-white/90 shadow-sm"
@@ -114,8 +157,8 @@ export default function MyTicketsModal({ isOpen, onClose }: MyTicketsModalProps)
                                                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
                                                             <Ticket className="h-5 w-5" />
                                                         </div>
-                                                        <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
-                                                            {getStatusLabel(ticket.status)}
+                                                        <span className={`rounded-full px-3 py-1.5 text-xs font-black ${isPastTicket(ticket) ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                                                            {isPastTicket(ticket) ? 'Geçmiş' : getStatusLabel(ticket.status)}
                                                         </span>
                                                     </div>
 
@@ -155,6 +198,8 @@ export default function MyTicketsModal({ isOpen, onClose }: MyTicketsModalProps)
                                             </div>
                                         ))}
                                     </div>
+                                        )}
+                                    </>
                                 )}
                             </Dialog.Panel>
                         </Transition.Child>
