@@ -5,6 +5,7 @@ import { EventSearchParams, TicketEvent } from "../types";
 const TABLE_NAME = process.env.EVENTS_TABLE || "";
 const DEFAULT_SEARCH_LIMIT = 60;
 const MAX_SEARCH_LIMIT = 100;
+export const BEST_SELLER_THRESHOLD = 50;
 
 export const isUpcomingEvent = (event: Pick<TicketEvent, "date">, now = new Date()) => {
   const eventTime = new Date(event.date).getTime();
@@ -35,6 +36,33 @@ const parseLimit = (limit?: number) => {
   }
 
   return Math.min(MAX_SEARCH_LIMIT, Math.max(1, Math.floor(limit)));
+};
+
+const getSoldTickets = (event: TicketEvent) => {
+  if (typeof event.totalTickets !== "number" || typeof event.availableTickets !== "number") {
+    return 0;
+  }
+
+  return Math.max(0, event.totalTickets - event.availableTickets);
+};
+
+const enrichBestSellerFields = (events: TicketEvent[]) => {
+  const rankedBestSellers = [...events]
+    .filter((event) => getSoldTickets(event) >= BEST_SELLER_THRESHOLD)
+    .sort((a, b) => getSoldTickets(b) - getSoldTickets(a));
+  const rankByEventId = new Map(rankedBestSellers.map((event, index) => [event.id, index + 1]));
+
+  return events.map((event) => {
+    const soldTickets = getSoldTickets(event);
+    const bestSellerRank = rankByEventId.get(event.id);
+
+    return {
+      ...event,
+      soldTickets,
+      isBestSeller: Boolean(bestSellerRank),
+      bestSellerRank,
+    };
+  });
 };
 
 const eventMatchesSearch = (event: TicketEvent, params: EventSearchParams) => {
@@ -88,7 +116,8 @@ export const listAllEvents = async () => {
     ExclusiveStartKey = result.LastEvaluatedKey;
   } while (ExclusiveStartKey);
 
-  return items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return enrichBestSellerFields(items)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
 export const searchEvents = async (params: EventSearchParams) => {

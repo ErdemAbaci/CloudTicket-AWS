@@ -35,6 +35,9 @@ interface EventData {
   lastPriceUpdateAt?: string;
   availableTickets?: number;
   totalTickets?: number;
+  soldTickets?: number;
+  isBestSeller?: boolean;
+  bestSellerRank?: number;
   category?: string;
   tags?: string[];
   imageUrl?: string;
@@ -129,6 +132,10 @@ function App() {
   const filteredEvents = events;
   const featuredEvent = filteredEvents[0] || events[0];
   const recommendedEvents = personalizedEvents.length > 0 ? personalizedEvents : filteredEvents.slice(0, 3);
+  const bestSellerEvents = filteredEvents
+    .filter((event) => event.isBestSeller)
+    .sort((a, b) => (a.bestSellerRank || 999) - (b.bestSellerRank || 999))
+    .slice(0, 4);
 
   const handleExploreClick = () => {
     document.getElementById('events')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -184,6 +191,9 @@ function App() {
               </button>
               <a href="#recommended" className="transition-colors hover:text-slate-950">
                 Sana Özel
+              </a>
+              <a href="#best-sellers" className="transition-colors hover:text-slate-950">
+                Çok Satanlar
               </a>
               <button
                 onClick={() => setIsOrganizerAnalyticsOpen(true)}
@@ -296,6 +306,26 @@ function App() {
             </div>
           </section>
 
+          {bestSellerEvents.length > 0 && (
+            <section id="best-sellers" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-wide text-emerald-700">Çok Satanlar</p>
+                  <h2 className="mt-2 text-3xl font-black text-slate-950">Talebi yüksek etkinlikler</h2>
+                </div>
+                <p className="max-w-md text-sm leading-6 text-slate-500">
+                  En az 50 satış eşiğini geçen etkinlikler otomatik olarak burada öne çıkar.
+                </p>
+              </div>
+
+              <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                {bestSellerEvents.map((event) => (
+                  <BestSellerCard key={event.id} event={event} onOpen={handleEventClick} />
+                ))}
+              </div>
+            </section>
+          )}
+
           <section id="events" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
@@ -333,6 +363,38 @@ function App() {
         </main>
       </div>
     </Authenticator>
+  );
+}
+
+function BestSellerCard({ event, onOpen }: { event: EventData; onOpen: (id: string) => void }) {
+  return (
+    <button
+      onClick={() => onOpen(event.id)}
+      className="group overflow-hidden rounded-[28px] border border-emerald-100 bg-white/90 text-left shadow-sm transition-all hover:-translate-y-1 hover:bg-white hover:shadow-2xl hover:shadow-emerald-100/80"
+    >
+      <div className="relative h-40 overflow-hidden bg-slate-200">
+        <img
+          src={event.imageUrl ? `${import.meta.env.VITE_MEDIA_BUCKET_URL}/${event.imageUrl}` : '/fallback-event.png'}
+          alt={event.name}
+          onError={(e) => { (e.target as HTMLImageElement).src = '/fallback-event.png'; }}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute left-3 top-3 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-black text-white shadow-sm">
+          #{event.bestSellerRank || '-'} Çok satan
+        </div>
+      </div>
+      <div className="p-5">
+        <p className="text-xs font-black uppercase tracking-wide text-emerald-700">
+          {event.soldTickets || 0} bilet satıldı
+        </p>
+        <h3 className="mt-2 line-clamp-2 text-lg font-black leading-snug text-slate-950">{event.name}</h3>
+        <p className="mt-2 text-sm font-semibold text-slate-500">{formatDate(event.date)}</p>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <CompactPrice event={event} />
+          <span className="rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white">İncele</span>
+        </div>
+      </div>
+    </button>
   );
 }
 

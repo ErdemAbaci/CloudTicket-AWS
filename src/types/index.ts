@@ -12,6 +12,9 @@ export interface TicketEvent {
   discountPercent?: number;
   totalTickets: number;
   availableTickets: number;
+  soldTickets?: number;
+  isBestSeller?: boolean;
+  bestSellerRank?: number;
   category?: string;
   tags?: string[];
   searchText?: string;

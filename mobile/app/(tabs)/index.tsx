@@ -26,6 +26,9 @@ interface EventData {
   price: number;
   availableTickets?: number;
   totalTickets?: number;
+  soldTickets?: number;
+  isBestSeller?: boolean;
+  bestSellerRank?: number;
   category?: string;
   tags?: string[];
   basePrice?: number;
@@ -103,6 +106,13 @@ export default function HomeScreen() {
   const visibleRecommendedEvents = useMemo(
     () => recommendedEvents.length > 0 ? recommendedEvents : events.slice(0, 3),
     [events, recommendedEvents],
+  );
+  const bestSellerEvents = useMemo(
+    () => events
+      .filter((event) => event.isBestSeller)
+      .sort((a, b) => (a.bestSellerRank || 999) - (b.bestSellerRank || 999))
+      .slice(0, 5),
+    [events],
   );
 
   const fetchEvents = useCallback(async () => {
@@ -272,6 +282,27 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
+      {bestSellerEvents.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionKicker}>Çok Satanlar</Text>
+              <Text style={styles.sectionTitle}>Talebi yüksek etkinlikler</Text>
+            </View>
+            <MaterialIcons name="local-fire-department" size={24} color="#047857" />
+          </View>
+
+          <FlatList
+            horizontal
+            data={bestSellerEvents}
+            keyExtractor={(item) => `best-seller-${item.id}`}
+            renderItem={({ item }) => <BestSellerCard event={item} onPress={() => setSelectedEvent(item)} />}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.bestSellerList}
+          />
+        </View>
+      ) : null}
+
       <View style={styles.sectionHeader}>
         <View>
           <Text style={styles.sectionKicker}>Etkinlikler</Text>
@@ -418,6 +449,27 @@ function RecommendationCard({ event, onPress }: { event: EventData; onPress: () 
             <Text style={styles.recommendationDiscount}>Fiyat düştü</Text>
           ) : null}
         </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function BestSellerCard({ event, onPress }: { event: EventData; onPress: () => void }) {
+  return (
+    <Pressable style={styles.bestSellerCard} onPress={onPress}>
+      <ImageBackground source={fallbackImage} style={styles.bestSellerImage} imageStyle={styles.bestSellerImageStyle}>
+        <View style={styles.bestSellerOverlay} />
+        <View style={styles.bestSellerRank}>
+          <Text style={styles.bestSellerRankText}>#{event.bestSellerRank || '-'}</Text>
+        </View>
+      </ImageBackground>
+      <Text style={styles.bestSellerTitle} numberOfLines={2}>
+        {event.name}
+      </Text>
+      <Text style={styles.bestSellerMeta}>{event.soldTickets || 0} bilet satıldı</Text>
+      <View style={styles.bestSellerFooter}>
+        <Text style={styles.bestSellerPrice}>{event.price} TL</Text>
+        <Text style={styles.bestSellerAction}>İncele</Text>
       </View>
     </Pressable>
   );
@@ -874,6 +926,78 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     marginTop: 2,
+  },
+  bestSellerList: {
+    gap: 12,
+  },
+  bestSellerCard: {
+    width: 190,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    padding: 12,
+  },
+  bestSellerImage: {
+    height: 104,
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: '#0F172A',
+  },
+  bestSellerImageStyle: {
+    borderRadius: 18,
+    opacity: 0.55,
+  },
+  bestSellerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#0F172A',
+    opacity: 0.2,
+  },
+  bestSellerRank: {
+    position: 'absolute',
+    left: 10,
+    top: 10,
+    borderRadius: 999,
+    backgroundColor: '#047857',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  bestSellerRankText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  bestSellerTitle: {
+    color: '#0F172A',
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '900',
+    marginTop: 12,
+  },
+  bestSellerMeta: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '900',
+    marginTop: 6,
+  },
+  bestSellerFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  bestSellerPrice: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  bestSellerAction: {
+    color: '#FFFFFF',
+    backgroundColor: '#0F172A',
+    overflow: 'hidden',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 11,
+    fontWeight: '900',
   },
   eventCard: {
     flexDirection: 'row',
