@@ -67,8 +67,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                 queryClient.invalidateQueries({ queryKey: ['events'] });
             }, 5000);
 
-        } catch (error) {
-            console.error(error);
+        } catch {
             toast.error('İşlem sırasında bir hata oluştu.');
         } finally {
             setIsSubmitting(false);
@@ -101,12 +100,12 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-[32px] border border-white bg-[#F7F4EF] p-6 text-left align-middle shadow-[0_32px_100px_rgba(15,23,42,0.24)] transition-all">
                                 <div className="flex justify-between items-center mb-6">
-                                    <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900">
+                                    <Dialog.Title as="h3" className="text-xl font-black leading-6 text-slate-950">
                                         Yeni Etkinlik Oluştur
                                     </Dialog.Title>
-                                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm transition-colors hover:text-slate-950">
                                         <X className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -118,7 +117,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                             <Type className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
                                             <input
                                                 type="text"
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-white/85 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-300 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400"
                                                 placeholder="Örn: Yaz Konseri"
                                                 value={formData.name}
                                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -132,7 +131,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                             <Calendar className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
                                             <input
                                                 type="date"
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-600"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-white/85 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-300 focus:border-slate-400 outline-none transition-all text-slate-600"
                                                 value={formData.date}
                                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                             />
@@ -145,7 +144,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                             <DollarSign className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
                                             <input
                                                 type="number"
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-white/85 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-300 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400"
                                                 placeholder="0.00"
                                                 value={formData.price}
                                                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
@@ -159,7 +158,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                             <DollarSign className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
                                             <input
                                                 type="number"
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-white/85 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-300 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400"
                                                 placeholder="İndirimsiz/Gerçek Değer"
                                                 value={formData.basePrice}
                                                 onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
@@ -171,7 +170,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                         <div className="space-y-1">
                                             <label className="text-sm font-medium text-slate-700">Kategori</label>
                                             <select
-                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-600"
+                                                className="w-full px-4 py-2.5 bg-white/85 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-300 focus:border-slate-400 outline-none transition-all text-slate-600"
                                                 value={formData.category}
                                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                             >
@@ -187,7 +186,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                             <label className="text-sm font-medium text-slate-700">Etiketler</label>
                                             <input
                                                 type="text"
-                                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                className="w-full px-4 py-2.5 bg-white/85 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-300 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400"
                                                 placeholder="rock, acikhava, yaz"
                                                 value={formData.tags}
                                                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
@@ -201,7 +200,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                             <Type className="absolute left-3 top-3 text-slate-400 w-5 h-5" />
                                             <input
                                                 type="number"
-                                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                                className="w-full pl-10 pr-4 py-2.5 bg-white/85 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-300 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400"
                                                 placeholder="Örn: 1000"
                                                 value={formData.totalTickets}
                                                 onChange={(e) => setFormData({ ...formData, totalTickets: e.target.value })}
@@ -214,25 +213,25 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                         <label className="text-sm font-medium text-slate-700">Afiş Görseli</label>
                                         <div
                                             className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-xl transition-all cursor-pointer relative group
-                                                ${file ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'}`}
+                                                ${file ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 hover:border-slate-400 hover:bg-white/70'}`}
                                             onClick={() => document.getElementById('file-upload')?.click()}
                                         >
                                             <div className="space-y-1 text-center">
                                                 {file ? (
                                                     <div className="text-sm text-slate-600 flex flex-col items-center">
                                                         <div className="p-2 bg-white rounded-full shadow-sm mb-2">
-                                                            <Upload className="w-6 h-6 text-indigo-600" />
+                                                            <Upload className="w-6 h-6 text-emerald-700" />
                                                         </div>
-                                                        <span className="font-medium text-indigo-700">{file.name}</span>
+                                                        <span className="font-medium text-emerald-700">{file.name}</span>
                                                         <span className="text-xs text-slate-500">Değiştirmek için tıklayın</span>
                                                     </div>
                                                 ) : (
                                                     <>
                                                         <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                                                            <Upload className="h-6 w-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                                            <Upload className="h-6 w-6 text-slate-400 group-hover:text-slate-700 transition-colors" />
                                                         </div>
                                                         <div className="flex text-sm text-slate-600 justify-center mt-2">
-                                                            <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                                            <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-slate-950 hover:text-slate-700 focus-within:outline-none">
                                                                 <span>Dosya Seç</span>
                                                             </label>
                                                         </div>
@@ -259,7 +258,7 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
                                         <button
                                             type="submit"
                                             disabled={isSubmitting}
-                                            className="w-full inline-flex justify-center rounded-xl border border-transparent bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                                            className="w-full inline-flex justify-center rounded-full border border-transparent bg-slate-950 px-4 py-3 text-sm font-black text-white hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                                         >
                                             {isSubmitting ? (
                                                 <span className="flex items-center">

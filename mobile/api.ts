@@ -31,8 +31,6 @@ api.interceptors.response.use(
         return response;
     },
     (error: any) => {
-        const serverError = error.response?.data?.error || "Sunucuyla iletişim kurulamadı";
-        console.error("API Error: ", serverError);
         return Promise.reject(error);
     }
 );
