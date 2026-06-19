@@ -80,6 +80,13 @@ functions:
           path: /hello
           method: get
           cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
   createEvent:
     handler: src/functions/event/create.handler
     events:
@@ -110,6 +117,13 @@ functions:
           path: /events
           method: get
           cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
   getEvent:
     handler: src/functions/event/get.handler
     events:
@@ -117,6 +131,13 @@ functions:
           path: /event/{id}
           method: get
           cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - CognitoUserPool
+                - Arn
   getUploadUrl:
     handler: src/functions/upload/getUrl.handler
     events:
