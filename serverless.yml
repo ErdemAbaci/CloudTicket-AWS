@@ -11,6 +11,10 @@ provider:
   tracing:
     lambda: true
     apiGateway: true
+  apiGateway:
+    throttle:
+      burstLimit: 50    # Anlık maksimum eşzamanlı istek
+      rateLimit: 20     # Saniyede maksimum istek sayısı
   environment:
     EVENTS_TABLE: ${self:service}-events-table-${sls:stage}
     TICKETS_TABLE: ${self:service}-tickets-table-${sls:stage}
