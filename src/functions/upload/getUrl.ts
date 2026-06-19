@@ -12,7 +12,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const contentType = event.queryStringParameters?.contentType;
 
     if (!contentType) {
-      return formatResponse(400, { error: "contentType is required" });
+      return formatResponse(400, { error: "contentType is required" }, event);
     }
 
     const fileExtension = contentType.split("/")[1] || "jpg";
@@ -29,9 +29,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return formatResponse(200, {
       uploadUrl,
       key
-    });
+    }, event);
   } catch (error) {
     console.error("S3 Presigner Error:", error);
-    return formatResponse(500, { error: "Could not generate upload URL" });
+    return formatResponse(500, { error: "Could not generate upload URL" }, event);
   }
 };

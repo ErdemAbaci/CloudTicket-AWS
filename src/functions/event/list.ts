@@ -32,9 +32,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       limit: parseLimit(params.limit),
     });
 
-    return formatResponse(200, items);
+    return formatResponse(200, items, event);
   } catch (error) {
     console.error(error);
-    return formatResponse(500, { error: "Hata" });
+    return formatResponse(500, { error: "Hata" }, event);
   }
 };

@@ -8,13 +8,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const userId = getUserIdFromEvent(event);
 
     if (!userId) {
-      return formatResponse(401, { error: "Kimlik doğrulanamadı" });
+      return formatResponse(401, { error: "Kimlik doğrulanamadı" }, event);
     }
 
     const tickets = await listTicketsByUser(userId);
-    return formatResponse(200, tickets);
+    return formatResponse(200, tickets, event);
   } catch (error) {
     console.error("Error fetching tickets:", error);
-    return formatResponse(500, { error: "Sunucu hatası" });
+    return formatResponse(500, { error: "Sunucu hatası" }, event);
   }
 };

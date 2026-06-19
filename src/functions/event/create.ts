@@ -17,13 +17,13 @@ const normalizeSearchText = (...values: Array<string | string[] | undefined>) =>
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     if (!event.body) {
-      return formatResponse(400, { error: "Body eksik" });
+      return formatResponse(400, { error: "Body eksik" }, event);
     }
 
     const body = JSON.parse(event.body) as Partial<TicketEvent>;
 
     if (!body.name || typeof body.price !== "number" || typeof body.totalTickets !== "number") {
-      return formatResponse(400, { error: "İsim, Fiyat ve Toplam Bilet (totalTickets) zorunludur" });
+      return formatResponse(400, { error: "İsim, Fiyat ve Toplam Bilet (totalTickets) zorunludur" }, event);
     }
 
     const eventId = randomUUID();
@@ -53,9 +53,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return formatResponse(202, {
       message: "İsteğiniz kuyruğa alındı.",
       id: eventId
-    });
+    }, event);
   } catch (error) {
     console.error(error);
-    return formatResponse(500, { error: "Sunucu hatası" });
+    return formatResponse(500, { error: "Sunucu hatası" }, event);
   }
 };

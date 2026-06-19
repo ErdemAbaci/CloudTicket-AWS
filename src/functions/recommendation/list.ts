@@ -18,12 +18,12 @@ const parseLimit = (limit?: string) => {
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     const userId = getUserIdFromEvent(event);
-    if (!userId) return formatResponse(401, { error: "Kimlik doğrulanamadı" });
+    if (!userId) return formatResponse(401, { error: "Kimlik doğrulanamadı" }, event);
     const limit = parseLimit(event.queryStringParameters?.limit);
     const cached = await getAiRecommendationCache(userId);
 
     if (cached?.recommendations?.length) {
-      return formatResponse(200, limit ? cached.recommendations.slice(0, limit) : cached.recommendations);
+      return formatResponse(200, limit ? cached.recommendations.slice(0, limit) : cached.recommendations, event);
     }
 
     const [events, history] = await Promise.all([
@@ -40,9 +40,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       aiProvider: "rule-based" as const,
     }));
 
-    return formatResponse(200, recommendations);
+    return formatResponse(200, recommendations, event);
   } catch (error) {
     console.error("Recommendation Error:", error);
-    return formatResponse(500, { error: "Öneriler yüklenemedi" });
+    return formatResponse(500, { error: "Öneriler yüklenemedi" }, event);
   }
 };
