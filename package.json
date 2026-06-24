@@ -5,13 +5,16 @@
     "seed:demo": "node scripts/seedDemoShowcase.mjs",
     "seed:july": "node scripts/seedJuly2026Events.mjs",
     "load:test": "node scripts/loadTestPurchases.mjs",
-    "verify:dlq": "node scripts/verifyDlqFlow.mjs"
+    "verify:dlq": "node scripts/verifyDlqFlow.mjs",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.160",
     "@types/node": "^25.2.0",
     "@types/qrcode": "^1.5.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.103.0"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.981.0",
